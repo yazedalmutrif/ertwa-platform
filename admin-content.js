@@ -8,6 +8,7 @@
         department: { leader_title: ['قائد القسم', 'قائدة القسم'], deputy_title: ['نائب القسم', 'نائبة القسم'] }
     };
     let initialized = false;
+    let homeLoaded = false;
 
     function field(labelText, control, id) {
         const wrapper = node('div', null, 'form-group');
@@ -78,6 +79,7 @@
     }
 
     function renderHome({ settings, stats }) {
+        const form = document.getElementById('home-content-form');
         document.getElementById('content-hero').value = settings.hero_text ?? '';
         document.getElementById('content-mission').value = settings.mission_text ?? '';
         document.getElementById('content-vision').value = settings.vision_text ?? '';
@@ -91,13 +93,17 @@
             fieldset.append(node('legend', stat.label), row);
             return fieldset;
         }));
+        homeLoaded = true;
+        form.hidden = false;
     }
 
     // Saves the texts, then each stat in order, stopping at the first error.
+    // Never saves before the current content loaded, so empty boxes cannot overwrite it.
     function setupHomeForm() {
         const form = document.getElementById('home-content-form');
         form.addEventListener('submit', async event => {
             event.preventDefault();
+            if (!homeLoaded) return;
             try {
                 const saved = await busy(form.querySelector('[type="submit"]'), async () => {
                     await api.saveSettings({

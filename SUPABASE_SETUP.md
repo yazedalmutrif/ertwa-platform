@@ -7,13 +7,23 @@ hosted on GitHub Pages. No separate Node server or secret key is needed to run i
 ## 1. Create the database
 
 Create a Supabase project. In its **SQL Editor**, run the complete contents of
-[`supabase/migrations/202610080001_init.sql`](supabase/migrations/202610080001_init.sql)
-once. This migration is intended for a new project: do not run it over existing
-tables with the same names. It seeds the six departments and the leadership names
-already present in the website. Events start empty so an admin can add real ones.
+these two files once each, in this order:
 
-The SQL is transactional. If execution fails, fix the reported error before
-retrying; do not skip the permission statements. Keep `public` exposed in the
+1. [`supabase/migrations/202610080001_init.sql`](supabase/migrations/202610080001_init.sql)
+   creates the tables and permissions. It is intended for a new project: do not run
+   it over existing tables with the same names. It seeds the six departments and the
+   leadership names already present in the website. Events start empty so an admin
+   can add real ones.
+2. [`supabase/migrations/202610080002_admin_content.sql`](supabase/migrations/202610080002_admin_content.sql)
+   adds what the admin editors need: homepage texts, department descriptions,
+   leader/deputy titles, the homepage statistics (`home_stats`), the protected
+   admin-role function, and the event seat guard. It is seeded with the website's
+   current wording. Without it the structure page and the dashboard editors cannot
+   load their content.
+
+Each file is transactional: if it fails, nothing from it is kept. Fix the reported
+error before retrying; do not skip the permission statements. Running a file a
+second time fails harmlessly because its tables or columns already exist. Keep `public` exposed in the
 Data API settings and keep `private` outside the exposed schemas.
 
 ## 2. Add the public connection settings
@@ -81,10 +91,30 @@ returning id, email, role;
 ```
 
 Confirm that the query returns your account, then sign in and open
-`dashboard.html`. The dashboard lets admins add/delete events, review committee
-applications and their answers, update service request statuses, and approve or
-reject contribution reports. To remove admin access, update `role` to `member` in
-the SQL Editor. Browser users cannot edit their own role or membership approval.
+`dashboard.html`. This SQL step is only needed for the first admin. The dashboard
+lets admins:
+
+- add, edit, hide/show and delete events (seats cannot go below current registrations);
+- review committee applications and their answers, update service request statuses,
+  and approve or reject contribution reports;
+- make another member an admin or remove their admin access («الأعضاء والمشرفين»);
+- change the platform and department leaders, deputies and their titles
+  («الهيكل التنظيمي»);
+- edit the homepage intro, mission, vision, department descriptions and statistics
+  («محتوى الصفحة الرئيسية»).
+
+Admins cannot change their own role, so an admin cannot lock themselves out; any
+admin can remove another admin. If no admin is left, repeat the SQL above. Browser
+users cannot edit their own role or membership approval.
+
+## 5. Service request emails
+
+Every saved service request is also emailed to `requestNotificationEmail` in
+[`supabase-config.js`](supabase-config.js) through [FormSubmit](https://formsubmit.co/).
+The first request after setup makes FormSubmit send an «Activate Form» email to
+that address; click it once, or no emails are delivered. Set the value to `''` to
+turn emails off. The address is visible in the public website code, and anyone can
+post to FormSubmit directly, so treat the dashboard as the record of real requests.
 
 ## Stored data and permissions
 
@@ -96,7 +126,8 @@ the SQL Editor. Browser users cannot edit their own role or membership approval.
 | `event_registrations` | Members read their own registrations; admins read all; registration uses a database function. |
 | `service_requests` | Guests submit without reading; signed-in owners read their own; admins read all and update status. |
 | `contributions` | Members submit/read their own; admins approve status; only approved hours count. |
-| `departments`, `platform_settings` | Public read; admins may edit through Supabase's Table Editor or authorized API calls. |
+| `departments`, `platform_settings`, `home_stats` | Public read; admins edit them from the dashboard. Statistics can be edited but not added or removed. |
+| `profiles.role` | Changed only by an admin through `set_member_role`, never for their own account. |
 
 Events use structured dates and times interpreted in **Asia/Riyadh**. Registration
 locks the event row, checks remaining seats and time, and is idempotent for the
@@ -105,8 +136,9 @@ same user/event. Deleting an event deletes its registrations as well.
 Guests' service requests are not attached to an account by matching an email.
 Sign in before submitting if you want the request to appear in your dashboard.
 The public service form intentionally allows guest submissions; it does not yet
-include CAPTCHA or per-client rate limiting. The homepage's social/training
-statistics remain editorial content; they are no longer randomly incremented.
+include CAPTCHA or per-client rate limiting. The homepage statistics, intro,
+mission, vision and department descriptions come from the database; if it cannot
+be reached, the pages show the wording built into the HTML.
 
 ## Verification
 

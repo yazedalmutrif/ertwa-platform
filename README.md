@@ -10,7 +10,8 @@ python3 -m http.server 5500 --bind 127.0.0.1
 ```
 
 Open `http://localhost:5500`. Follow [Supabase setup](SUPABASE_SETUP.md) to create
-the database, add the two public connection values, and promote your admin account.
+the database (two SQL files), add the public connection values, and promote your
+first admin account.
 Authentication and data submissions require that setup.
 
 ## Features
@@ -19,8 +20,11 @@ Authentication and data submissions require that setup.
 - Committee application wizard that stores personal data and questionnaire answers.
 - Public events with persistent registration, duplicate prevention, and seat limits.
 - Member dashboard showing actual membership status, registrations, requests, and approved hours.
-- Admin dashboard for events, applications, service requests, and contribution approvals.
-- Guest digital service requests and editable organizational leadership data.
+- Admin dashboard for adding, editing and hiding events, applications, service requests,
+  contribution approvals, and making members admins.
+- Admin editing of the structure page (leaders, deputies, titles) and homepage content
+  (intro, mission, vision, department descriptions, statistics).
+- Guest digital service requests, each emailed to the owner through FormSubmit.
 - Database-enforced access controls and Arabic feedback for failed operations.
 
 ## Project files
@@ -29,10 +33,11 @@ Authentication and data submissions require that setup.
 | --- | --- |
 | `index.html`, `departments.html`, `events.html`, `structure.html` | Public pages |
 | `login.html`, `register.html`, `dashboard.html`, `order.html` | Account, admin, and service flows |
-| `supabase-config.js` | Project URL and public browser key |
+| `supabase-config.js` | Project URL, public browser key, and request notification email |
 | `api.js` | Supabase authentication, queries, and mutation API |
 | `main.js` | Page integration and member dashboard |
-| `admin.js` | Admin dashboard actions |
+| `admin.js` | Admin dashboard: events, reviews, members and roles |
+| `admin-content.js` | Admin editors for the structure page and homepage content |
 | `script.js` | Visual effects and committee wizard |
 | `supabase/migrations/` | Database schema, triggers, functions, grants, and RLS |
 | `tests/` | PostgreSQL permissions and frontend behavior tests |

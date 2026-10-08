@@ -249,3 +249,37 @@ test('home content saves texts then each stat and reports the first error, keepi
     assert.equal(window.document.getElementById('content-vision').value, 'رؤية طويلة');
     await window.happyDOM.close();
 });
+
+test('stat counters end on exactly the value that was entered', async () => {
+    const setup = w => {
+        w.IntersectionObserver = class { constructor(cb) { this.cb = cb; } observe(el) { this.cb([{ isIntersecting: true, target: el }]); } unobserve() {} };
+        // Runs the counters' short intervals back to back (capped); the 2s typing effect never starts.
+        w.setInterval = (callback, delay) => {
+            const handle = { stopped: delay >= 1000, ticks: 0 };
+            const tick = () => { if (!handle.stopped && handle.ticks++ < 5000) { callback(); setImmediate(tick); } };
+            setImmediate(tick);
+            return handle;
+        };
+        w.clearInterval = handle => { if (handle) handle.stopped = true; };
+        w.document.querySelector('[data-stat="members"] .stat-number').textContent = '1,200+';
+        w.document.querySelector('[data-stat="events"] .stat-number').textContent = '+50';
+    };
+    const window = await page('index.html', { siteContent: () => new Promise(() => {}), listEvents: async () => [], registeredEventIds: async () => [] },
+        { scripts: ['script.js'], setup });
+    await new Promise(resolve => setTimeout(resolve, 50));
+    assert.equal(window.document.querySelector('[data-stat="members"] .stat-number').textContent, '1,200+');
+    assert.equal(window.document.querySelector('[data-stat="events"] .stat-number').textContent, '+50');
+    await window.happyDOM.close();
+});
+
+test('the homepage content form stays closed when its content fails to load', async () => {
+    let saves = 0;
+    const window = await adminPage({ siteContent: async () => { throw new Error('انقطع الاتصال'); },
+        saveSettings: async () => { saves++; }, saveStat: async () => { saves++; } });
+    const form = window.document.getElementById('home-content-form');
+    assert.equal(form.hidden, true);
+    submit(window, 'home-content-form'); await flush();
+    assert.equal(saves, 0);
+    assert.match(window.document.getElementById('admin-structure-list').textContent, /انقطع الاتصال/);
+    await window.happyDOM.close();
+});

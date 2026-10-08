@@ -278,7 +278,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     current += increment;
                     if (current >= targetNumber) {
-                        stat.textContent = targetNumber + suffix;
+                        // End on the value exactly as written (e.g. "1,200+", "+50").
+                        stat.textContent = fullText;
                         clearInterval(counter);
                     } else {
                         stat.textContent = current + suffix;
