@@ -53,6 +53,58 @@
         form.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
     }
 
+    // Attendee times are shown in Riyadh time, like the events themselves.
+    const timeLabel = value => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Riyadh', dateStyle: 'short', timeStyle: 'short', hourCycle: 'h23' })
+        .format(new Date(value)).replace(',', '');
+    const csvCell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    // Text that Excel would treat as a formula is made inert with a leading apostrophe.
+    const inert = value => (/^[=+\-@]/.test(String(value ?? '')) ? `'${value}` : String(value ?? ''));
+    // UTF-8 with a BOM so Excel shows Arabic; phones as ="…" so leading zeros survive.
+    function attendeesCsv(rows) {
+        const lines = ['الاسم,البريد,الجوال,وقت التسجيل', ...rows.map(row => [
+            csvCell(inert(row.profiles?.full_name)), csvCell(inert(row.profiles?.email)),
+            csvCell(row.phone ? `="${row.phone}"` : ''), csvCell(timeLabel(row.created_at))
+        ].join(','))];
+        return `\uFEFF${lines.join('\r\n')}\r\n`;
+    }
+    function download(filename, text) {
+        const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+        const link = node('a');
+        link.href = url; link.download = filename;
+        document.body.append(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    // Only admins can load this: the database returns other people's rows to admins alone.
+    async function showAttendees(event) {
+        const panel = document.getElementById('admin-attendees');
+        const rows = await api.eventRegistrations(event.id);
+        const actions = node('div', null, 'form-row');
+        const save = node('button', 'تحميل Excel', 'admin-action');
+        save.type = 'button';
+        save.addEventListener('click', () => download(`attendees-${event.date}.csv`, attendeesCsv(rows)));
+        const close = node('button', 'إغلاق', 'admin-action');
+        close.type = 'button';
+        close.addEventListener('click', () => { panel.hidden = true; });
+        actions.append(save, close);
+        const sheet = node('table', null, 'admin-table');
+        const head = node('tr');
+        ['الاسم', 'البريد', 'الجوال', 'وقت التسجيل'].forEach(label => head.append(node('th', label)));
+        const thead = node('thead');
+        thead.append(head);
+        const body = node('tbody');
+        body.id = 'admin-attendees-list';
+        sheet.append(thead, body);
+        const scroll = node('div', null, 'table-scroll');
+        scroll.append(sheet);
+        panel.replaceChildren(node('h4', `المسجلون في: ${event.title} (${rows.length})`), actions, scroll);
+        table('admin-attendees-list', rows, 4, (row, attendee) => {
+            cell(row, attendee.profiles?.full_name || ''); cell(row, attendee.profiles?.email || '');
+            cell(row, attendee.phone || '—'); cell(row, timeLabel(attendee.created_at));
+        });
+        panel.hidden = false;
+        panel.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    }
+
     async function refresh() {
         const [data, members] = await Promise.all([api.adminData(), api.listMembers()]);
         message(document.getElementById('admin-controls'), '');
@@ -63,7 +115,13 @@
             const edit = node('button', 'تعديل', 'admin-action');
             edit.type = 'button';
             edit.addEventListener('click', () => setEditMode(event));
-            controls.append(edit);
+            const attendees = node('button', 'المسجلون', 'admin-action');
+            attendees.type = 'button';
+            attendees.addEventListener('click', async () => {
+                try { await busy(attendees, () => showAttendees(event)); }
+                catch (error) { message(document.getElementById('admin-controls'), api.errorMessage(error), true); }
+            });
+            controls.append(edit, attendees);
             action(controls, event.published ? 'إخفاء' : 'إظهار', () => api.setEventPublished(event.id, !event.published));
             action(controls, 'حذف', async () => {
                 if (!window.confirm('هل تريد حذف هذه الفعالية وجميع تسجيلاتها؟')) return;
@@ -147,5 +205,5 @@
         await refresh();
         await window.ErtwaAdminContent.initialize();
     }
-    window.ErtwaAdmin = { initialize };
+    window.ErtwaAdmin = { initialize, attendeesCsv };
 })();

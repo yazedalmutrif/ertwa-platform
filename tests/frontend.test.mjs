@@ -394,3 +394,23 @@ test('admins add, hide and restore departments from the dashboard', async () => 
     assert.deepEqual(calls.at(-1), ['active', 'media', true]);
     await window.happyDOM.close();
 });
+
+test('admins see an event attendee sheet with phones', async () => {
+    const event = { id: 'e1', title: 'ورشة', description: 'x', date: '2099-05-01', time: '18:30:00', location: 'x', image: '', capacity: null, published: true, participants: 2 };
+    const rows = [{ created_at: '2099-04-01T10:00:00Z', phone: '0551234567', profiles: { full_name: 'سارة', email: 's@x.co' } },
+        { created_at: '2099-04-02T10:00:00Z', phone: null, profiles: { full_name: 'خالد', email: 'k@x.co' } }];
+    const window = await adminPage({ events: [event], eventRegistrations: async id => (id === 'e1' ? rows : []) });
+    [...window.document.querySelectorAll('#admin-events-list button')].find(b => b.textContent === 'المسجلون').click(); await flush();
+    const cells = [...window.document.querySelectorAll('#admin-attendees-list tr')].map(tr => [...tr.children].map(td => td.textContent));
+    assert.deepEqual(cells.map(row => row.slice(0, 3)), [['سارة', 's@x.co', '0551234567'], ['خالد', 'k@x.co', '—']]);
+    assert.equal(window.document.getElementById('admin-attendees').hidden, false);
+    await window.happyDOM.close();
+});
+
+test('the attendee CSV opens in Excel with Arabic, leading zeros and inert formulas', async () => {
+    const window = await adminPage({});
+    const csv = window.ErtwaAdmin.attendeesCsv([{ created_at: '2099-04-01T10:00:00Z', phone: '0551234567', profiles: { full_name: '=HYPERLINK("x")', email: 'a,b@x.co' } }]);
+    assert.ok(csv.startsWith('﻿الاسم,البريد,الجوال,وقت التسجيل\r\n'));
+    assert.match(csv, /"'=HYPERLINK\(""x""\)","a,b@x\.co","=""0551234567""",/);
+    await window.happyDOM.close();
+});
