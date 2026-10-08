@@ -82,19 +82,42 @@
                 button.type = 'button';
                 button.disabled = registered || past || full;
                 const participants = node('span', `${event.participants} مشارك`, 'participants');
+                // Signed-in visitors confirm with a phone number, which the admin's attendee sheet lists.
+                function phoneForm() {
+                    const form = node('form', null, 'event-phone');
+                    const input = node('input', null, 'form-group__input');
+                    Object.assign(input, { type: 'tel', name: 'phone', maxLength: 20, placeholder: '05xxxxxxxx', required: true, autocomplete: 'tel' });
+                    input.setAttribute('aria-label', 'رقم الجوال');
+                    const confirm = node('button', 'تأكيد التسجيل', 'btn-submit');
+                    confirm.type = 'submit';
+                    const cancel = node('button', 'إلغاء', 'btn-secondary');
+                    cancel.type = 'button';
+                    cancel.addEventListener('click', () => { form.remove(); message(card, ''); });
+                    form.addEventListener('submit', async submitEvent => {
+                        submitEvent.preventDefault();
+                        try {
+                            const saved = await busy(confirm, async () => { await api.registerForEvent(event.id, input.value); return true; });
+                            if (!saved) return;
+                            form.remove();
+                            button.textContent = 'تم التسجيل ✓';
+                            button.disabled = true;
+                            message(card, 'تم حفظ تسجيلك بنجاح.');
+                            const fresh = (await api.listEvents()).find(item => item.id === event.id);
+                            if (fresh) participants.textContent = `${fresh.participants} مشارك`;
+                        } catch (error) { message(card, api.errorMessage(error), true); }
+                    });
+                    form.append(input, confirm, cancel);
+                    return form;
+                }
                 button.addEventListener('click', async () => {
+                    if (card.querySelector('.event-phone')) return;
                     try {
-                        const registeredNow = await busy(button, async () => {
-                            if (!await api.getUser()) { window.location.href = 'login.html'; return false; }
-                            await api.registerForEvent(event.id);
-                            return true;
-                        });
-                        if (!registeredNow) return;
-                        button.textContent = 'تم التسجيل ✓';
-                        button.disabled = true;
-                        message(card, 'تم حفظ تسجيلك بنجاح.');
-                        const fresh = (await api.listEvents()).find(item => item.id === event.id);
-                        if (fresh) participants.textContent = `${fresh.participants} مشارك`;
+                        const signedIn = await busy(button, async () => Boolean(await api.getUser()));
+                        if (signedIn === undefined) return;
+                        if (!signedIn) { window.location.href = 'login.html'; return; }
+                        const form = phoneForm();
+                        content.append(form);
+                        form.querySelector('input').focus();
                     } catch (error) { message(card, api.errorMessage(error), true); }
                 });
                 footer.append(button, participants);

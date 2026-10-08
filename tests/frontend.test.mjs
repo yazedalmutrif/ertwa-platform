@@ -70,9 +70,11 @@ test('event content is rendered as text and failed registration never displays s
     assert.equal(card.querySelector('h3 img'), null);
     assert.equal(card.querySelector('p script'), null);
     assert.ok(card.querySelector('img').src.endsWith('images/web-dev-event.png'));
-    card.querySelector('button').click(); await flush();
-    assert.equal(card.querySelector('button').textContent, 'سجل الآن');
-    assert.equal(card.querySelector('button').disabled, false);
+    card.querySelector('.btn-register').click(); await flush();
+    card.querySelector('.event-phone [name="phone"]').value = '0551234567';
+    card.querySelector('.event-phone').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })); await flush();
+    assert.equal(card.querySelector('.btn-register').textContent, 'سجل الآن');
+    assert.equal(card.querySelector('.btn-register').disabled, false);
     assert.match(card.querySelector('.form-message').textContent, /اكتملت المقاعد/);
     await window.happyDOM.close();
 });
@@ -348,5 +350,25 @@ test('choosing a new department signs up with its slug and the standard question
     submit(window, 'questionsForm'); await flush();
     assert.equal(submitted.department_slug, 'dept-ai');
     assert.equal(submitted.answers.length, 4);
+    await window.happyDOM.close();
+});
+
+test('registering for an event sends the typed phone and confirms only after saving', async () => {
+    let call, fail = true;
+    const event = { id: 'e1', title: 'ورشة', description: 'تفاصيل', image: '', date: '2099-01-01', time: '12:00:00', location: 'الرياض', published: true, participants: 0, capacity: null };
+    const window = await page('events.html', { listEvents: async () => [event], registeredEventIds: async () => [], getUser: async () => ({ id: 'u1' }),
+        registerForEvent: async (id, phone) => { call = [id, phone]; if (fail) throw new Error('رقم الجوال غير صحيح'); } });
+    const card = window.document.querySelector('.event-card');
+    card.querySelector('.btn-register').click(); await flush();
+    const form = card.querySelector('.event-phone');
+    form.querySelector('[name="phone"]').value = '0551234567';
+    form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })); await flush();
+    assert.deepEqual(call, ['e1', '0551234567']);
+    assert.match(card.querySelector('.form-message').textContent, /رقم الجوال/);
+    assert.notEqual(card.querySelector('.btn-register').textContent, 'تم التسجيل ✓');
+    fail = false;
+    form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })); await flush();
+    assert.equal(card.querySelector('.btn-register').textContent, 'تم التسجيل ✓');
+    assert.equal(card.querySelector('.event-phone'), null);
     await window.happyDOM.close();
 });

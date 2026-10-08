@@ -916,3 +916,7 @@ button:disabled { opacity: 0.65; cursor: default; }
 
 /* Departments added from the dashboard show a Font Awesome icon instead of artwork. */
 .spec-icon-box i, .committee-card__icon i { font-size: 1.8rem; color: var(--jungle-green); }
+
+/* Phone confirmation inside an event card. */
+.event-phone { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.event-phone .form-group__input { flex: 1 1 160px; }
