@@ -26,6 +26,15 @@
         if (!trimmed || trimmed.length > max) throw new Error(`يرجى إدخال ${label} بشكل صحيح.`);
         return trimmed;
     }
+    function optionalText(value, label, max) {
+        const trimmed = String(value ?? '').trim();
+        if (trimmed.length > max) throw new Error(`يرجى إدخال ${label} بشكل صحيح.`);
+        return trimmed;
+    }
+    function title(value, allowed) {
+        if (!allowed.includes(value)) throw new Error('يرجى اختيار المسمى.');
+        return value;
+    }
     function email(value) {
         const normalized = text(value, 'البريد الإلكتروني', 254).toLowerCase();
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) throw new Error('البريد الإلكتروني غير صحيح.');
@@ -102,28 +111,61 @@
         await requireUser();
         return result(getClient().rpc('register_for_event', { p_event_id: eventId }));
     }
-    async function addEvent(input) {
-        await requireAdmin();
+    function eventFields(input) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || !/^\d{2}:\d{2}$/.test(input.time)) throw new Error('يرجى إدخال التاريخ والوقت بشكل صحيح.');
-        return result(getClient().from('events').insert({
+        return {
             title: text(input.title, 'عنوان الفعالية', 200), description: text(input.description, 'وصف الفعالية'),
             date: input.date, time: input.time, location: text(input.location, 'المكان', 500),
             image: input.image || 'images/web-dev-event.png',
             capacity: input.capacity === '' || input.capacity == null ? null : number(input.capacity, 'عدد المقاعد', 1, 100000)
-        }).select().single());
+        };
+    }
+    async function addEvent(input) {
+        await requireAdmin();
+        return result(getClient().from('events').insert(eventFields(input)).select().single());
+    }
+    async function updateEvent(eventId, input) {
+        await requireAdmin();
+        return result(getClient().from('events').update(eventFields(input)).eq('id', eventId).select().single());
+    }
+    async function setEventPublished(eventId, published) {
+        await requireAdmin();
+        return result(getClient().from('events').update({ published: Boolean(published) }).eq('id', eventId).select('id').single());
     }
     async function deleteEvent(eventId) {
         await requireAdmin();
         return result(getClient().from('events').delete().eq('id', eventId).select('id').single());
     }
+    // Matches the labels in main.js; used for the notification subject.
+    const serviceLabels = { web: 'تطوير المواقع', games: 'تطوير الألعاب', branding: 'تصميم الهوية البصرية' };
+    // Emails the owner through FormSubmit. Not awaited: the request is already saved.
+    function notifyServiceRequest(request) {
+        const address = (global.ERTWA_CONFIG || {}).requestNotificationEmail;
+        if (!address || typeof global.fetch !== 'function') return;
+        const service = serviceLabels[request.service_type];
+        try {
+            global.fetch(`https://formsubmit.co/ajax/${address}`, {
+                method: 'POST', keepalive: true,
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({
+                    _subject: `طلب جديد: ${service} — ${request.client_name}`, _template: 'table', _captcha: 'false',
+                    name: request.client_name, email: request.email, 'نوع الخدمة': service,
+                    'وصف المشروع': request.description, 'الميزانية': `${request.budget} ريال`, 'المدة': request.timeline
+                })
+            }).catch(() => {});
+        } catch (_) { /* never turn a saved request into an error */ }
+    }
     async function submitServiceRequest(input) {
         if (!['web', 'games', 'branding'].includes(input.service_type)) throw new Error('يرجى اختيار نوع الخدمة.');
-        // No .select(): anonymous visitors have INSERT access only.
-        return result(getClient().from('service_requests').insert({
+        const row = {
             client_name: text(input.client_name, 'الاسم', 150), email: email(input.email),
             service_type: input.service_type, description: text(input.description, 'وصف المشروع'),
             budget: number(input.budget, 'الميزانية', 0, 9999999999.99), timeline: text(input.timeline, 'المدة الزمنية', 200)
-        }));
+        };
+        // No .select(): anonymous visitors have INSERT access only.
+        const data = await result(getClient().from('service_requests').insert(row));
+        notifyServiceRequest(row);
+        return data;
     }
     async function submitContribution(input) {
         await requireUser();
@@ -164,6 +206,58 @@
         if (!allowed[table]?.includes(status)) throw new Error('حالة الطلب غير صحيحة.');
         return result(getClient().from(table).update({ status }).eq('id', id).select('id').single());
     }
+    async function listMembers() {
+        await requireAdmin();
+        return result(getClient().from('profiles').select('id, full_name, email, role, membership_status, created_at').order('created_at', { ascending: false }));
+    }
+    async function setMemberRole(userId, role) {
+        await requireAdmin();
+        if (!['member', 'admin'].includes(role)) throw new Error('الصلاحية غير صحيحة.');
+        return result(getClient().rpc('set_member_role', { p_user_id: userId, p_role: role }));
+    }
+    async function siteContent() {
+        const sdk = getClient();
+        const [settings, departments, stats] = await Promise.all([
+            result(sdk.from('platform_settings').select('*').eq('id', true).single()),
+            result(sdk.from('departments').select('*').order('sort_order')),
+            result(sdk.from('home_stats').select('*').order('sort_order'))
+        ]);
+        return { settings, departments, stats };
+    }
+    const platformTitles = { leader_title: ['قائد المنصة', 'قائدة المنصة'], deputy_title: ['نائب القائد', 'نائبة القائد'] };
+    const departmentTitles = { leader_title: ['قائد القسم', 'قائدة القسم'], deputy_title: ['نائب القسم', 'نائبة القسم'] };
+    const settingsFields = {
+        leader_name: value => optionalText(value, 'اسم قائد المنصة', 150),
+        deputy_name: value => optionalText(value, 'اسم نائب القائد', 150),
+        leader_title: value => title(value, platformTitles.leader_title),
+        deputy_title: value => title(value, platformTitles.deputy_title),
+        hero_text: value => optionalText(value, 'نص المقدمة', 1000),
+        mission_text: value => optionalText(value, 'نص الرسالة', 1000),
+        vision_text: value => optionalText(value, 'نص الرؤية', 1000)
+    };
+    // Saves only the fields given, so the structure and homepage editors stay independent.
+    async function saveSettings(fields) {
+        await requireAdmin();
+        const values = Object.fromEntries(Object.entries(settingsFields)
+            .filter(([key]) => Object.hasOwn(fields, key)).map(([key, check]) => [key, check(fields[key])]));
+        return result(getClient().from('platform_settings').update(values).eq('id', true).select('id').single());
+    }
+    async function saveDepartment(slug, input) {
+        await requireAdmin();
+        return result(getClient().from('departments').update({
+            leader: optionalText(input.leader, 'اسم القائد', 150), deputy: optionalText(input.deputy, 'اسم النائب', 150),
+            leader_title: title(input.leader_title, departmentTitles.leader_title),
+            deputy_title: title(input.deputy_title, departmentTitles.deputy_title),
+            description: optionalText(input.description, 'وصف القسم', 500)
+        }).eq('slug', slug).select('slug').single());
+    }
+    async function saveStat(slug, input) {
+        await requireAdmin();
+        return result(getClient().from('home_stats').update({
+            value: text(input.value, 'الرقم', 20), label: text(input.label, 'عنوان الإحصائية', 100),
+            caption: optionalText(input.caption, 'الوصف المختصر', 200)
+        }).eq('slug', slug).select('slug').single());
+    }
     async function structureData() {
         return Promise.all([
             result(getClient().from('platform_settings').select('leader_name, deputy_name').eq('id', true).single()),
@@ -185,7 +279,8 @@
     }
     global.ErtwaAPI = {
         getUser, getProfile, signUp, signIn, signOut, listEvents, registeredEventIds,
-        registerForEvent, addEvent, deleteEvent, submitServiceRequest, submitContribution,
-        dashboardData, adminData, reviewApplication, updateStatus, structureData, errorMessage
+        registerForEvent, addEvent, updateEvent, setEventPublished, deleteEvent, submitServiceRequest, submitContribution,
+        dashboardData, adminData, reviewApplication, updateStatus, listMembers, setMemberRole,
+        siteContent, saveSettings, saveDepartment, saveStat, structureData, errorMessage
     };
 })(window);
