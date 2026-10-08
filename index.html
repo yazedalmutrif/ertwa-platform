@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة ارتواء</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="register.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="data:,">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-right-section">
+            <div class="logo">
+                <img src="images/logo.png" alt="لوقو ارتواء">
+            </div>
+            <nav class="nav-links">
+                <a href="index.html" class="active">الرئيسية</a>
+                <a href="#about-section">من نحن</a> 
+                <a href="structure.html">الهيكل التنظيمي</a>
+                <a href="#departments-section">الأقسام</a>
+                <a href="#events-section">الفعاليات</a>
+                <a href="#contact-section">تواصل معنا</a>
+            </nav>
+        </div>
+        <button class="btn-login" id="loginBtn" onclick="window.location.href='login.html'">تسجيل الدخول</button>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>منصة <span class="highlight">ارتواء</span></h1>
+                <p>منصة تقنية متخصصة تحت مظلة معهد طاقات المعتمد للتدريب، تهدف إلى تمكين الأفراد والشركات من خلال تقديم محتوى تقني متطور.</p>
+                <div class="hero-btns">
+                    <button class="btn-start" onclick="window.location.href='register.html'">ابدأ الآن ←</button>
+                    <button class="btn-outline" onclick="window.location.href='#events-section'">الفعاليات القادمة</button>
+                </div>
+            </div>
+            <div class="wave-container">
+                <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 120L1440 120L1440 0C1440 0 1140 120 720 120C300 120 0 0 0 0L0 120Z" fill="white"/>
+                </svg>
+            </div>
+        </section>
+
+        <section class="about-section" id="about-section">
+            <div class="container">
+                <h2 class="dynamic-title">نحو بيئة رقمية <span id="typing-text">تفاعلية</span> ملهمة</h2>
+                <div class="info-card message-card">
+                    <h3>رسالتنا</h3>
+                    <p>نؤمن أن المعرفة حق للجميع ورسالتنا هي أن نكون مصدراً دائماً وموثوقاً لإرواء شغف التقنية والمعرفة.</p>
+                </div>
+                <div class="info-card vision-card">
+                    <h3>رؤيتنا</h3>
+                    <p>أن نكون المنصة الرائدة في إرواء المجتمع معرفياً وأن نصبح رمزاً للتوعية التقنية الشاملة.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="specialized-sections" id="departments-section">
+            <div class="container">
+                <h2 class="section-main-title">أقسامنا <span class="highlight">المتخصصة</span></h2>
+                <div class="specialized-grid">
+                    <div class="spec-card">
+                        <div class="spec-icon-box"><img src="images/Overlay(6).svg" alt="1"></div>
+                        <h3>التقنية</h3>
+                        <p>تطوير المواقع والتطبيقات وتقديم الحلول التقنية المتقدمة.</p>
+                        <a href="departments.html#tech-dept" class="read-more">معرفة المزيد</a>
+                    </div>
+                    <div class="spec-card">
+                        <div class="spec-icon-box"><img src="images/Overlay(1).svg" alt="2"></div>
+                        <h3>التصميم</h3>
+                        <p>إنشاء هويات بصرية مبتكرة وتصاميم جذابة للمشاريع.</p>
+                        <a href="departments.html#design-dept" class="read-more">معرفة المزيد</a>
+                    </div>
+                    <div class="spec-card">
+                        <div class="spec-icon-box"><img src="images/Overlay(2).svg" alt="3"></div>
+                        <h3>الفعاليات</h3>
+                        <p>تنظيم وإدارة الفعاليات التقنية وبناء شراكات استراتيجية.</p>
+                        <a href="departments.html#events-dept" class="read-more">معرفة المزيد</a>
+                    </div>
+                    <div class="spec-card">
+                        <div class="spec-icon-box"><img src="images/Overlay(3).svg" alt="4"></div>
+                        <h3>المتابعة والتطوير</h3>
+                        <p>متابعة سير العمل وتطوير الأداء لضمان جودة المخرجات.</p>
+                        <a href="departments.html#followup-dept" class="read-more">معرفة المزيد</a>
+                    </div>
+                    <div class="spec-card">
+                        <div class="spec-icon-box"><img src="images/Overlay(4).svg" alt="5"></div>
+                        <h3>الإعلام</h3>
+                        <p>إنتاج المحتوى المرئي والتغطية الإعلامية للفعاليات.</p>
+                        <a href="departments.html#media-dept" class="read-more">معرفة المزيد</a>
+                    </div>
+                    <div class="spec-card">
+                        <div class="spec-icon-box"><img src="images/Overlay(5).svg" alt="6"></div>
+                        <h3>المحتوى</h3>
+                        <p>كتابة وإعداد المحتوى التقني والتعليمي بأسلوب مبسط.</p>
+                        <a href="departments.html#content-dept" class="read-more">معرفة المزيد</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats-section">
+            <div class="container">
+                <h2 class="stats-main-title">ارتواء بالأرقام</h2>
+                <p class="stats-subtitle">أرقام تعكس مسيرتنا ونجاحَنا في خدمة المجتمع التقني</p>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><img src="images/heart-icon.svg" alt="ساعة تطوعية"></div>
+                        <div class="stat-number">400+</div>
+                        <div class="stat-label">ساعة تطوعية معتمدة</div>
+                        <div class="stat-sub">من منصة العمل التطوعي</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon"><img src="images/users-icon.svg" alt="متابع"></div>
+                        <div class="stat-number">10K+</div>
+                        <div class="stat-label">متابع</div>
+                        <div class="stat-sub">عبر منصات التواصل الاجتماعي</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon"><img src="images/shake-icon.svg" alt="شراكة"></div>
+                        <div class="stat-number">25+</div>
+                        <div class="stat-label">شراكة</div>
+                        <div class="stat-sub">مع مؤسسات وشركات رائدة</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon"><img src="images/work-icon.svg" alt="ساعة تدريبية"></div>
+                        <div class="stat-number">300+</div>
+                        <div class="stat-label">ساعة تدريبية</div>
+                        <div class="stat-sub">في المجال التقني</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon"><img src="images/event-icon.svg" alt="فعالية"></div>
+                        <div class="stat-number">15+</div>
+                        <div class="stat-label">فعالية منفذة</div>
+                        <div class="stat-sub">ورش عمل ومؤتمرات ولقاءات</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon"><img src="images/member-icon.svg" alt="عضو"></div>
+                        <div class="stat-number">50+</div>
+                        <div class="stat-label">عضو نشط</div>
+                        <div class="stat-sub">من مختلف التخصصات التقنية</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="events-section" id="events-section">
+            <div class="container">
+                <div class="events-header">
+                    <div class="title-wrapper">
+                        <span class="section-badge">الفعاليات</span>
+                        <h2 class="events-title">الفعاليات <span class="highlight">القادمة</span></h2>
+                    </div>
+                    <button class="btn-all-events" onclick="window.location.href='events.html'">جميع الفعاليات ←</button>
+                </div>
+                <div class="events-grid" id="homeEventsGrid">
+                    <p class="data-message" role="status">جارِ تحميل الفعاليات...</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="digital-services" id="services-section">
+            <div class="container">
+                <div class="services-header">
+                    <span class="section-badge">بوابة الخدمات الرقمية</span>
+                    <h2 class="services-main-title">خدماتنا <span class="highlight">الرقمية</span></h2>
+                    <p class="services-subtitle">نقدم لكم مجموعة متكاملة من الخدمات الرقمية بجودة عالية وأسعار تنافسية</p>
+                </div>
+
+                <div class="services-grid">
+                    <div class="service-card">
+                        <div class="service-icon-box"><img src="images/web-icon.svg" alt="Web"></div>
+                        <h3>طلبات تصميم المواقع</h3>
+                        <p>تصميم وتطوير مواقع احترافية متجاوبة مع جميع الأجهزة</p>
+                        <ul class="service-features">
+                            <li>مواقع شركات</li>
+                            <li>متاجر إلكترونية</li>
+                            <li>مواقع شخصية</li>
+                            <li>تطبيقات ويب</li>
+                        </ul>
+                        <button class="btn-order" onclick="window.location.href='order.html'">قدم طلبك ←</button>
+                    </div>
+
+                    <div class="service-card active-card">
+                        <div class="service-icon-box"><img src="images/game-icon.svg" alt="Games"></div>
+                        <h3>طلبات تطوير الألعاب</h3>
+                        <p>تطوير ألعاب تعليمية وترفيهية باستخدام أحدث التقنيات والمحركات</p>
+                        <ul class="service-features">
+                            <li>ألعاب تعليمية</li>
+                            <li>ألعاب جوال</li>
+                            <li>ألعاب ويب</li>
+                            <li>تصميم مراحل</li>
+                        </ul>
+                        <button class="btn-order" onclick="window.location.href='order.html'">قدم طلبك ←</button>
+                    </div>
+
+                    <div class="service-card">
+                        <div class="service-icon-box"><img src="images/design-icon.svg" alt="Design"></div>
+                        <h3>طلبات التصميم</h3>
+                        <p>تصميم هويات بصرية، شعارات، منشورات سوشيال ميديا</p>
+                        <ul class="service-features">
+                            <li>تصميم شعارات</li>
+                            <li>هوية بصرية</li>
+                            <li>منشورات</li>
+                            <li>بروشورات</li>
+                        </ul>
+                        <button class="btn-order" onclick="window.location.href='order.html'">قدم طلبك ←</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer" id="contact-section">
+        <div class="footer-container">
+            <div class="footer-section brand-info">
+                <div class="footer-logo-wrapper">
+                    <img src="images/logo.png" alt="لوقو ارتواء" class="footer-logo-large">
+                    <h3 class="brand-title">ارتواء</h3>
+                </div>
+                <p class="brand-desc">منصة تقنية متخصصة تحت مظلة معهد طاقات المعتمد للتدريب، تهدف إلى تمكين الأفراد والشركات.</p>
+                <div class="social-icons">
+                    <a href="https://x.com/ertwa_sa?s=11&t=2OUlDA-cD-MaENMfvSddbQ" target="_blank" rel="noopener noreferrer" aria-label="إكس (تويتر)" title="إكس (تويتر)"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="https://www.linkedin.com/company/ertiwa/" target="_blank" rel="noopener noreferrer" aria-label="لينكد إن" title="لينكد إن"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="https://www.tiktok.com/@ertwatech?_r=1&_t=ZS-96NVIwnv2bE" target="_blank" rel="noopener noreferrer" aria-label="تيك توك" title="تيك توك"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-section">
+                <h4>روابط سريعة</h4>
+                <ul>
+                    <li><a href="#about-section">من نحن</a></li>
+                    <li><a href="#departments-section">الأقسام</a></li>
+                    <li><a href="#events-section">الفعاليات</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h4>خدماتنا</h4>
+                <ul>
+                    <li><a href="#services-section">طلبات التصميم</a></li>
+                    <li><a href="#services-section">تطوير الألعاب</a></li>
+                    <li><a href="#services-section">تصميم المواقع</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section contact-us">
+                <h4>تواصل معنا</h4>
+                <ul>
+                    <li>
+                        <i class="fa-regular fa-envelope footer-icon"></i>
+                        <a href="mailto:ertiwa.sa@gmail.com">ertiwa.sa@gmail.com</a>
+                    </li>
+                    <li>
+                        <i class="fa-solid fa-phone footer-icon"></i>
+                        <span>+966 XX XXX XXXX</span>
+                    </li>
+                    <li>
+                        <i class="fa-solid fa-location-dot footer-icon"></i>
+                        <span>الطائف - المملكة العربية السعودية</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="footer-line"></div>
+            <p>© 2026 جميع الحقوق محفوظة - ارتواء</p>
+            <p>تصميم وتطوير الفريق التقني بمنصة ارتواء</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
+    <script src="supabase-config.js"></script>
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

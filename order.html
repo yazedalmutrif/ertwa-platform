@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقديم طلب خدمة رقمية - منصة ارتواء</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="register.css">
+    <link rel="icon" href="data:,">
+    <style>
+        .order-card-wrapper { margin-top: 20px; text-align: right; }
+        .order-header-center { text-align: center; margin-bottom: 30px; }
+        .order-title-size { font-size: 2rem; }
+        .order-subtitle-margin { margin-bottom: 0; }
+        .order-success-box { display: none; text-align: center; padding: 30px 10px; }
+        .order-success-icon { font-size: 4rem; color: #28B58F; margin-bottom: 20px; }
+        .order-success-title { color: #25323B; font-weight: 800; margin-bottom: 15px; }
+        .order-success-text { color: #64748b; font-size: 0.95rem; line-height: 1.8; margin-bottom: 30px; }
+    </style>
+</head>
+<body class="registration-page">
+
+    <div class="register-card order-card-wrapper">
+        <div class="order-header-center">
+            <h2 class="register-card__title order-title-size">بوابة طلب الخدمات الرقمية</h2>
+            <p class="register-card__subtitle order-subtitle-margin">أدخل تفاصيل مشروعك وسيتواصل معك الفريق الفني لارتواء</p>
+        </div>
+
+        <form id="digitalServiceForm">
+            
+            <div id="formFields">
+                <div class="form-group">
+                    <label class="form-group__label" for="clientName">اسم العميل / الجهة طالبة الخدمة</label>
+                    <input type="text" id="clientName" class="form-group__input" placeholder="أدخل الاسم الكامل أو اسم المنشأة" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-group__label" for="clientEmail">بريد التواصل الإلكتروني</label>
+                    <input type="email" id="clientEmail" class="form-group__input" placeholder="name@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-group__label" for="serviceType">نوع الخدمة الرقمية المطلوبة</label>
+                    <select id="serviceType" class="form-group__select" required>
+                        <option value="" disabled selected>اختر الخدمة المستهدفة</option>
+                        <option value="web">تطوير وتصميم المواقع الإلكترونية</option>
+                        <option value="games">تطوير الألعاب التعليمية والترفيهية</option>
+                        <option value="branding">تصميم الهويات البصرية والشعارات</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-group__label" for="serviceDesc">وصف فكرة المشروع المتوقعة</label>
+                    <textarea id="serviceDesc" class="form-group__textarea" rows="4" placeholder="اكتب نبذة مختصرة عن فكرتك والأهداف الأساسية للمشروع..." required></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-group__label" for="serviceBudget">الميزانية التقديرية (SAR)</label>
+                        <input type="number" id="serviceBudget" min="0" max="9999999999.99" step="0.01" class="form-group__input" placeholder="مثال: 5000" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="serviceTimeline">المدة الزمنية للتسليم</label>
+                        <input type="text" id="serviceTimeline" class="form-group__input" placeholder="مثال: أسبوعين، شهر..." required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitOrderBtn">إرسال تفاصيل الطلب ←</button>
+                <button type="button" class="btn-secondary" onclick="window.location.href='index.html'">العودة للرئيسية</button>
+            </div>
+
+            <div id="orderSuccess" class="order-success-box">
+                <div class="order-success-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h3 class="order-success-title">تم استلام طلبك بنجاح!</h3>
+                <p class="order-success-text">
+                    شكرًا لثقتك بمنصة ارتواء الرقمية. تم تحويل تفاصيل المشروع إلى رئيس اللجنة المختصة بنجاح، وسيقوم ممثل الفريق الفني بالتواصل معك عبر البريد الإلكتروني خلال 48 ساعة لمناقشة آليات التنفيذ.
+                </p>
+                <button type="button" class="btn-submit" onclick="window.location.href='index.html'">العودة للصفحة الرئيسية</button>
+            </div>
+
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
+    <script src="supabase-config.js"></script>
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

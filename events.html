@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جميع الفعاليات - منصة ارتواء</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:,">
+    <style>
+        .events-page-body { background-color: #f8fafc; }
+        .events-header-bg { position: relative; background-color: var(--dark-bg); }
+        .events-main-padding { padding: 60px 0; }
+        .events-container-max { max-width: 1200px; margin: 0 auto; }
+        .events-header-center { text-align: center; margin-bottom: 50px; }
+        .events-title-margin { margin-top: 10px; }
+        .events-subtitle-margin { color: #64748b; margin-top: 10px; }
+    </style>
+</head>
+<body class="events-page-body">
+
+    <header class="main-header events-header-bg">
+        <div class="header-right-section">
+            <div class="logo">
+                <img src="images/logo.png" alt="لوقو ارتواء">
+            </div>
+            <nav class="nav-links">
+                <a href="index.html">الرئيسية</a>
+                <a href="index.html#about-section">من نحن</a>
+                <a href="structure.html">الهيكل التنظيمي</a>
+                <a href="index.html#departments-section">الأقسام</a>
+                <a href="events.html" class="active">الفعاليات</a>
+            </nav>
+        </div>
+        <button class="btn-login" onclick="window.location.href='login.html'">تسجيل الدخول</button>
+    </header>
+
+    <main class="events-main-padding">
+        <section class="events-section">
+            <div class="container events-container-max">
+                
+                <div class="events-header-center">
+                    <span class="section-badge">أرشيف الأنشطة</span>
+                    <h2 class="events-title events-title-margin">جميع الفعاليات والأنشطة <span>الرقمية</span></h2>
+                    <p class="events-subtitle-margin">تصفح وسجل في ورش العمل واللقاءات التقنية الحالية والقادمة</p>
+                </div>
+
+                <div class="events-grid" id="eventsContainer">
+                    <p class="data-message" role="status">جارِ تحميل الفعاليات...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
+    <script src="supabase-config.js"></script>
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

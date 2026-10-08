@@ -1,0 +1,407 @@
+/* ======================================================== 
+   Register & Join Page Styles (Ertwa Platform)
+   ======================================================== */
+
+/* 1. حاوية الصفحة الرئيسية */
+.registration-page {
+    background-color: #eef9f6;
+    min-height: 100vh;
+    padding: 120px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Cairo', sans-serif;
+}
+
+/* 2. شريط الخطوات (Stepper) */
+.stepper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 40px auto 60px;
+    direction: rtl;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #94A3B8;
+    font-weight: 600;
+}
+
+.step__number {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: #E2E8F0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.9rem;
+    transition: 0.3s;
+}
+
+.step__line {
+    width: 80px;
+    height: 2px;
+    background-color: #E2E8F0;
+    transition: 0.3s;
+}
+
+.step--active {
+    color: #28B58F;
+}
+
+.step--active .step__number {
+    background-color: #28B58F;
+    color: white;
+}
+
+.step--completed {
+    color: #28B58F;
+}
+
+.step--completed .step__number {
+    background-color: #E6F7F3;
+    color: #28B58F;
+    border: 1px solid #28B58F;
+}
+
+/* 3. بطاقة النموذج (Card) */
+.register-card {
+    background: white;
+    padding: 50px 40px;
+    border-radius: 30px; 
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 650px;
+    text-align: center;
+    border: 1px solid rgba(40, 181, 143, 0.1);
+}
+
+.register-card__title {
+    font-family: 'Cairo', sans-serif;
+    font-weight: 800; 
+    color: var(--dark-bg, #25323B);
+}
+
+.register-card__subtitle {
+    color: #94a3b8;
+    margin-bottom: 40px;
+    font-size: 1rem;
+}
+
+/* 4. عناصر النموذج */
+.form-group {
+    text-align: right;
+    margin-bottom: 24px;
+}
+
+.form-group__label {
+    display: block;
+    font-weight: 700; 
+    color: var(--dark-bg, #25323B);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.form-group__input, 
+.form-group__select, 
+.form-group__textarea {
+    width: 100%;
+    padding: 15px 20px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    font-family: var(--font-main, 'Cairo', sans-serif);
+    color: var(--dark-bg, #25323B);
+    transition: 0.3s;
+}
+
+.form-group__input:focus,
+.form-group__select:focus,
+.form-group__textarea:focus {
+    outline: none;
+    border-color: var(--jungle-green, #28B58F);
+    background-color: white;
+    box-shadow: 0 0 0 4px rgba(40, 181, 143, 0.05);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+#otherSpecializationGroup {
+    animation: fadeIn 0.4s ease;
+}
+
+/* 5. الأزرار */
+.btn-submit {
+    width: 100%;
+    background-color: var(--jungle-green, #28B58F);
+    color: white;
+    padding: 18px;
+    border: none;
+    border-radius: 15px;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: 0.3s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-submit:hover {
+    filter: brightness(1.05);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    width: 100%;
+    background-color: var(--dark-bg, #25323B);
+    color: white;
+    padding: 18px;
+    border: none;
+    border-radius: 15px;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    margin-top: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-secondary:hover {
+    opacity: 0.9;
+}
+
+.btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    margin-top: 40px;
+}
+
+.btn-home {
+    background: #25323B;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    max-width: 300px;
+}
+
+/* 6. شبكة اللجان (Committees Grid) */
+.committees-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    padding: 20px;
+}
+
+.committee-card {
+    background: #FFFFFF;
+    border: 1px solid #F1F5F9;
+    border-radius: 20px;
+    padding: 35px 25px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.committee-card:hover, 
+.committee-card.selected {
+    border-color: #28B58F;
+    box-shadow: 0px 10px 25px rgba(40, 181, 143, 0.1);
+}
+
+.committee-card__icon {
+    width: 70px;
+    height: 70px;
+    background: #F0FAF8;
+    border-radius: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 20px;
+}
+
+.committee-card__icon img {
+    width: 35px;
+    height: 35px;
+}
+
+.committee-card__name {
+    color: #25323B;
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.committee-card__desc {
+    color: #64748B;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.btn-select-committee {
+    background: transparent;
+    border: 1px solid #E2E8F0;
+    color: #28B58F;
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.committee-card.selected .btn-select-committee {
+    background: #28B58F;
+    color: white;
+    border-color: #28B58F;
+}
+
+/* 7. الروابط التفاعلية */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    direction: rtl;
+    color: #94A3B8;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.back-link:hover {
+    color: #28B58F;
+    text-decoration: none; 
+    transform: translateX(5px);
+}
+
+/* 8. قسم الأسئلة المتغيرة */
+.questions-card {
+    background: white;
+    padding: 40px;
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+}
+
+.question-row {
+    margin-bottom: 30px;
+    text-align: right;
+}
+
+.q-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.q-num {
+    width: 32px;
+    height: 32px;
+    background: #28B58F;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.q-text {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #25323B;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-right: 47px;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #475569;
+}
+
+.option-item input[type="radio"] {
+    accent-color: #28B58F;
+    width: 18px;
+    height: 18px;
+}
+
+.input-field-q {
+    width: calc(100% - 47px);
+    margin-right: 47px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: 'Cairo', sans-serif;
+    outline: none;
+    transition: 0.3s;
+}
+
+.input-field-q:focus {
+    border-color: #28B58F;
+    box-shadow: 0 0 0 3px rgba(40, 181, 143, 0.1);
+}
+
+/* 9. الحركات (Animations) */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 10. التجاوب مع الشاشات (Responsive Design) */
+@media (max-width: 992px) {
+    .committees-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .register-card {
+        padding: 30px 20px;
+    }
+
+    .step__label {
+        display: none;
+    }
+
+    .committees-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .input-field-q,
+    .options-grid {
+        width: 100%;
+        margin-right: 0;
+    }
+}

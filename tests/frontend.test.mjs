@@ -1,0 +1,122 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { readFile } from 'node:fs/promises';
+import { Window } from 'happy-dom';
+import vm from 'node:vm';
+
+const root = new URL('../', import.meta.url);
+const read = name => readFile(new URL(name, root), 'utf8');
+const flush = async () => { for (let i = 0; i < 8; i++) await new Promise(resolve => setImmediate(resolve)); };
+
+async function page(name, api) {
+    const window = new Window({ url: `http://localhost:5500/${name}`, settings: {
+        enableJavaScriptEvaluation: true, disableCSSFileLoading: true,
+        disableJavaScriptFileLoading: true, disableComputedStyleRendering: true,
+        suppressInsecureJavaScriptEnvironmentWarning: true
+    } });
+    window.document.write(await read(name));
+    window.ErtwaAPI = { errorMessage: error => error.message, ...api };
+    window.eval(await read('main.js'));
+    window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+    await flush();
+    return window;
+}
+const submit = (window, id) => window.document.getElementById(id).dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
+const fill = (window, values) => Object.entries(values).forEach(([id, value]) => { window.document.getElementById(id).value = value; });
+
+test('missing configuration fails explicitly; legacy demo tokens cannot log in', async () => {
+    const context = vm.createContext({ window: { localStorage: { getItem: () => 'admin-demo-token' } }, URL });
+    vm.runInContext(await read('api.js'), context);
+    await assert.rejects(context.window.ErtwaAPI.getUser(), /لم يتم إعداد/);
+});
+
+test('failed login stays on the form and restores the submit button', async () => {
+    const window = await page('login.html', { signIn: async () => { throw new Error('بيانات غير صحيحة'); } });
+    fill(window, { email: 'admin@example.com', password: 'incorrect-password' });
+    submit(window, 'loginForm'); await flush();
+    assert.ok(window.location.href.endsWith('login.html'));
+    assert.match(window.document.querySelector('.form-message').textContent, /بيانات غير صحيحة/);
+    assert.equal(window.document.querySelector('[type="submit"]').disabled, false);
+    assert.equal(window.localStorage.getItem('userRole'), null);
+    await window.happyDOM.close();
+});
+
+test('service requests preserve the selected service and show success only after a write succeeds', async () => {
+    let fail = true, submitted;
+    const window = await page('order.html', { submitServiceRequest: async input => {
+        submitted = input; if (fail) throw new Error('فشل الحفظ');
+    } });
+    fill(window, { clientName: 'عميل', clientEmail: 'client@example.com', serviceType: 'branding', serviceDesc: 'هوية بصرية', serviceBudget: '4500', serviceTimeline: 'شهر' });
+    submit(window, 'digitalServiceForm'); await flush();
+    assert.equal(submitted.service_type, 'branding');
+    assert.notEqual(window.document.getElementById('formFields').style.display, 'none');
+    assert.notEqual(window.document.getElementById('orderSuccess').style.display, 'block');
+    fail = false;
+    submit(window, 'digitalServiceForm'); await flush();
+    assert.equal(window.document.getElementById('formFields').style.display, 'none');
+    assert.equal(window.document.getElementById('orderSuccess').style.display, 'block');
+    await window.happyDOM.close();
+});
+
+test('event content is rendered as text and failed registration never displays success', async () => {
+    const event = { id: 'uuid', title: '<img src=x onerror=alert(1)>', description: '<script>bad()</script>',
+        image: 'javascript:alert(1)', date: '2099-01-01', time: '12:00:00', location: 'الرياض', published: true, participants: 3, capacity: 10 };
+    const window = await page('events.html', { listEvents: async () => [event], registeredEventIds: async () => [],
+        getUser: async () => ({ id: 'member' }), registerForEvent: async () => { throw new Error('اكتملت المقاعد'); } });
+    const card = window.document.querySelector('.event-card');
+    assert.equal(card.querySelector('h3').textContent, event.title);
+    assert.equal(card.querySelector('h3 img'), null);
+    assert.equal(card.querySelector('p script'), null);
+    assert.ok(card.querySelector('img').src.endsWith('images/web-dev-event.png'));
+    card.querySelector('button').click(); await flush();
+    assert.equal(card.querySelector('button').textContent, 'سجل الآن');
+    assert.equal(card.querySelector('button').disabled, false);
+    assert.match(card.querySelector('.form-message').textContent, /اكتملت المقاعد/);
+    await window.happyDOM.close();
+});
+
+test('registration retains answers on failure and handles email confirmation without a session', async () => {
+    let fail = true, submitted;
+    const window = await page('register.html', { signUp: async input => {
+        submitted = input; if (fail) throw new Error('فشل إنشاء الحساب');
+        return { user: { id: 'member' }, session: null };
+    } });
+    fill(window, { fullName: 'عضو', userEmail: 'member@example.com', userPassword: 'UniquePassword123', confirmPassword: 'UniquePassword123', userCity: 'الرياض', userAge: '25', specializationSelect: 'cs' });
+    window.document.getElementById('committeeQuestionTitle').textContent = 'التقنية';
+    window.document.getElementById('dynamicQuestions').innerHTML = '<div class="question-row" data-required="true"><span class="q-text">مشروعك *</span><textarea>مشروعي التقني</textarea></div>';
+    submit(window, 'questionsForm'); await flush();
+    assert.equal(submitted.department_slug, 'tech');
+    assert.equal(submitted.answers[0].answer, 'مشروعي التقني');
+    assert.notEqual(window.document.getElementById('successContainer').style.display, 'block');
+    assert.equal(window.document.getElementById('userPassword').value, 'UniquePassword123');
+    fail = false;
+    submit(window, 'questionsForm'); await flush();
+    assert.equal(window.document.getElementById('successContainer').style.display, 'block');
+    assert.match(window.document.getElementById('registration-success-message').textContent, /رسالة التأكيد/);
+    assert.equal(window.document.getElementById('userPassword').value, '');
+    await window.happyDOM.close();
+});
+
+test('required checkbox answers prevent signup when no choice is selected', async () => {
+    let calls = 0;
+    const window = await page('register.html', { signUp: async () => { calls++; } });
+    window.document.getElementById('dynamicQuestions').innerHTML = '<div class="question-row" data-required="true"><span class="q-text">لغات البرمجة *</span><input type="checkbox" value="JavaScript"></div>';
+    submit(window, 'questionsForm'); await flush();
+    assert.equal(calls, 0);
+    assert.match(window.document.querySelector('.form-message').textContent, /جميع الأسئلة/);
+    await window.happyDOM.close();
+});
+
+test('member dashboard displays database values and ignores local admin flags', async () => {
+    const window = await page('dashboard.html', {
+        getUser: async () => ({ id: 'member' }),
+        dashboardData: async () => ({ profile: { full_name: 'اسم حقيقي', role: 'member', membership_status: 'pending' },
+            applications: [{ departments: { name: 'التقنية' }, status: 'pending' }], registrations: [], contributions: [], requests: [], hours: 0 })
+    });
+    window.localStorage.setItem('userRole', 'admin');
+    assert.equal(window.document.getElementById('admin-controls').style.display, 'none');
+    assert.match(window.document.getElementById('welcome-name').textContent, /اسم حقيقي/);
+    assert.equal(window.document.getElementById('verified-hours').textContent, '0');
+    assert.equal(window.document.getElementById('membership-status').textContent, 'قيد المراجعة');
+    await window.happyDOM.close();
+});

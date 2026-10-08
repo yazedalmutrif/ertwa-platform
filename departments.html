@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أقسام منصة ارتواء المتخصصة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:,">
+    <style>
+        .page-header { position: relative; background-color: var(--dark-bg); }
+        .dept-main-bg { background-color: #f8fafc; min-height: 80vh; padding: 60px 0; }
+        .dept-title-margin { margin-bottom: 20px; }
+        .dept-subtitle-margin { color: #64748b; margin-bottom: 50px; }
+        .dept-icon-box { font-size: 2.5rem; color: var(--jungle-green); margin-bottom: 15px; }
+        .dept-icon-box-dark { font-size: 2.5rem; color: var(--dark-bg); margin-bottom: 15px; }
+        .dept-tasks-wrapper { text-align: right; margin-top: 20px; border-top: 1px dashed rgba(40, 181, 143, 0.2); padding-top: 15px; }
+        .dept-tasks-wrapper-dark { text-align: right; margin-top: 20px; border-top: 1px dashed rgba(37, 50, 59, 0.1); padding-top: 15px; }
+        .dept-tasks-title { color: var(--dark-bg); font-weight: 700; margin-bottom: 10px; font-size: 1rem; }
+        .dept-icon-margin { color: var(--jungle-green); margin-left: 8px; }
+        .dept-tasks-list { list-style: none; padding-right: 15px; color: #475569; font-size: 0.95rem; line-height: 1.8; }
+    </style>
+</head>
+<body>
+
+    <header class="main-header page-header">
+        <div class="header-right-section">
+            <div class="logo">
+                <img src="images/logo.png" alt="لوقو ارتواء">
+            </div>
+            <nav class="nav-links">
+                <a href="index.html">الرئيسية</a>
+                <a href="index.html#about-section">من نحن</a>
+                <a href="structure.html">الهيكل التنظيمي</a>
+                <a href="departments.html" class="active">كل الأقسام</a>
+            </nav>
+        </div>
+        <button class="btn-login" onclick="window.location.href='login.html'">تسجيل الدخول</button>
+    </header>
+
+    <main class="dept-main-bg">
+        <section class="about-section departments-page-container">
+            <div class="container">
+                <h2 class="dynamic-title dept-title-margin">تفاصيل <span>أقسامنا المتخصصة</span></h2>
+                <p class="dept-subtitle-margin">استعراض تفاصيل اللجان والمهام التشغيلية الموكلة لكل قسم داخل ارتواء</p>
+                
+                <div class="info-card message-card" id="tech-dept">
+                    <div class="dept-icon-box"><i class="fa-solid fa-code"></i></div>
+                    <h3>القسم التقني (Technology Department)</h3>
+                    <p>يهتم هذا القسم ببناء وتطوير البنية البرمجية التحتية للمنصة، وإدارة الأنظمة والخدمات الرقمية، وتوفير الحلول المتكاملة لجميع مشاريع المنصة والمجتمع.</p>
+                    <div class="dept-tasks-wrapper">
+                        <h4 class="dept-tasks-title"><i class="fa-solid fa-list-check dept-icon-margin"></i>المهام المطلوبة:</h4>
+                        <ul class="dept-tasks-list">
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> تطوير وتحديث الموقع الإلكتروني والأنظمة البرمجية للمنصة بانتظام.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> بناء وإعداد النماذج والأسئلة الديناميكية للجان الانضمام والقبول.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> ربط واجهات المستخدم وتأمين تدفق البيانات الرقمية وضمان تكاملها.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card vision-card" id="design-dept">
+                    <div class="dept-icon-box-dark"><i class="fa-solid fa-palette"></i></div>
+                    <h3>قسم التصميم (Design Department)</h3>
+                    <p>الواجهة البصرية والهوية الجاذبة للمنصة. يتولى هذا القسم تصميم واجهات المستخدم والمخرجات والمنشورات لضمان تجربة مستخدم مذهلة وهوية بصرية موحدة واحترافية.</p>
+                    <div class="dept-tasks-wrapper-dark">
+                        <h4 class="dept-tasks-title"><i class="fa-solid fa-list-check dept-icon-margin"></i>المهام المطلوبة:</h4>
+                        <ul class="dept-tasks-list">
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> ابتكار وتطوير الهوية البصرية والشعارات الخاصة بالمبادرات التابعة للمنصة.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> تصميم واجهات المستخدم (UI/UX) للموقع الإلكتروني والخدمات الرقمية المستحدثة.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> إعداد قوالب وتصاميم منشورات شبكات التواصل الاجتماعي بجودة ومعايير عالية.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card message-card" id="events-dept">
+                    <div class="dept-icon-box"><i class="fa-solid fa-calendar-days"></i></div>
+                    <h3>قسم الفعاليات والعلاقات (Events & Relations)</h3>
+                    <p>المحرك اللوجستي لتنظيم وإدارة كافة الورش والمؤتمرات التقنية (الواقعية وعن بُعد)، والتواصل مع المتحدثين وبناء شراكات استراتيجية مثمرة مع الجهات الخارجية المعتمدة.</p>
+                    <div class="dept-tasks-wrapper">
+                        <h4 class="dept-tasks-title"><i class="fa-solid fa-list-check dept-icon-margin"></i>المهام المطلوبة:</h4>
+                        <ul class="dept-tasks-list">
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> جدولة والتخطيط اللوجستي والزمني لكافة الورش واللقاءات التدريبية.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> التواصل الاستباقي مع المتحدثين والخبراء التقنيين لإثراء المحتوى الممتد للجمهور.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> بناء قنوات الشراكة الاستراتيجية وتوسيع نطاق التعاون المؤسسي الرقمي.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card vision-card" id="followup-dept">
+                    <div class="dept-icon-box-dark"><i class="fa-solid fa-chart-line"></i></div>
+                    <h3>قسم المتابعة والتطوير (Quality & Follow-up)</h3>
+                    <p>صمام الأمان والجودة لضمان مخرجات ذات معايير عالية. يتابع هذا القسم سير عمل اللجان والالتزام بالخطط الزمنية وتطوير الأنظمة الداخلية للمنصة بصفة مستمرة.</p>
+                    <div class="dept-tasks-wrapper-dark">
+                        <h4 class="dept-tasks-title"><i class="fa-solid fa-list-check dept-icon-margin"></i>المهام المطلوبة:</h4>
+                        <ul class="dept-tasks-list">
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> مراجعة جودة المخرجات الرقمية للتأكد من مطابقتها للمعايير قبل النشر العلني.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> الإشراف على معدلات التزام الأعضاء بالمهام الموكلة إليهم والخطط الزمنية للجان.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> إعداد التقارير الدورية التشغيلية وصياغة التوصيات التطويرية للإدارة التنفيذية.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card message-card" id="media-dept">
+                    <div class="dept-icon-box"><i class="fa-solid fa-camera-retro"></i></div>
+                    <h3>قسم الإعلام والإنتاج المرئي (Media Department)</h3>
+                    <p>صوت المنصة وصورتها في الفضاء الرقمي، يختص بإنتاج المواد المرئية، المونتاج، التصوير، التغطيات الحية للفعاليات، وإدارة الحسابات الرسمية على شبكات التواصل.</p>
+                    <div class="dept-tasks-wrapper">
+                        <h4 class="dept-tasks-title"><i class="fa-solid fa-list-check dept-icon-margin"></i>المهام المطلوبة:</h4>
+                        <ul class="dept-tasks-list">
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> توثيق وتصوير كافة الفعاليات واللقاءات (الواقعية والافتراضية) الخاصة بالمنصة.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> إدارة المونتاج وتطوير المواد المرئية ومقاطع الموشن جرافيك والتعليق الصوتي.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> إدارة الحسابات الرسمية وجدولة التغطيات المباشرة لضمان التواجد الرقمي الفعّال.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card vision-card" id="content-dept">
+                    <div class="dept-icon-box-dark"><i class="fa-solid fa-pen-nib"></i></div>
+                    <h3>قسم صناعة وتحرير المحتوى (Content Department)</h3>
+                    <p>صياغة وتبسيط المفاهيم المعقدة، حيث يتولى الفريق كتابة الثريدات التقنية، الأدلة المعرفية والمناهج التعليمية بأسلوب مبسط، جذاب، وقريب لوعي وثقافة المجتمع.</p>
+                    <div class="dept-tasks-wrapper-dark">
+                        <h4 class="dept-tasks-title"><i class="fa-solid fa-list-check dept-icon-margin"></i>المهام المطلوبة:</h4>
+                        <ul class="dept-tasks-list">
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> كتابة المحتوى الثقافي والثريدات المعرفية المتخصصة لمنصة X.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> صياغة السيناريوهات والنصوص التشويقية والإعلانية للفعاليات والخدمات الرقمية.</li>
+                            <li><i class="fa-regular fa-circle-check dept-icon-margin"></i> إعداد وتحرير الأدلة والمناهج الحقيبية للورش التدريبية بصورة مبسطة ومفهومة.</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

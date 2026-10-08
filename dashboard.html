@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - منصة ارتواء</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="register.css">
+    <link rel="icon" href="data:,">
+    <style>
+        .dashboard-header { background-color: var(--dark-bg); }
+        .dashboard-container { width: 100%; max-width: 1000px; margin-top: 40px; padding: 0 20px; }
+        .dashboard-register-card { max-width: 100%; text-align: right; padding: 40px; }
+        .dashboard-profile-row { display: flex; align-items: center; gap: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 25px; margin-bottom: 30px; flex-wrap: wrap; }
+        .dashboard-profile-icon { width: 80px; height: 80px; background: #e6f7f3; color: var(--jungle-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .dashboard-welcome-title { color: var(--dark-bg); font-weight: 800; font-size: 1.8rem; margin-bottom: 5px; }
+        .dashboard-profile-text { color: #64748b; font-size: 0.95rem; }
+        .dashboard-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .dashboard-stat-card { background: #f8fafc; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0; }
+        .dashboard-stat-card h4 { color: var(--dark-bg); margin-bottom: 15px; font-weight: 700; }
+        .dashboard-status { background: #e6f7f3; color: var(--jungle-green); padding: 6px 15px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-block; }
+        .dashboard-card-description { color: #64748b; font-size: 0.85rem; margin-top: 15px; line-height: 1.6; }
+        .dashboard-stat-list { list-style: none; color: #475569; font-size: 0.9rem; line-height: 2; padding: 0; margin: 0; }
+        .dashboard-action-row { display: flex; gap: 15px; flex-wrap: wrap; }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .admin-table th, .admin-table td { text-align: right; padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        .admin-table th { background-color: #f1f5f9; color: var(--dark-bg); font-weight: 700; }
+        .admin-section-title { color: var(--dark-bg); font-weight: 800; margin-bottom: 15px; border-bottom: 2px solid var(--jungle-green); padding-bottom: 8px; }
+        .admin-section-subtitle { color: var(--dark-bg); font-weight: 800; margin-bottom: 15px; }
+        .admin-icon { color: var(--jungle-green); margin-left: 8px; }
+        .admin-form-margin { margin-bottom: 40px; }
+        .btn-submit-margin { margin-top: 10px; }
+        .align-left { text-align: left; }
+        .hidden-element { display: none; }
+        .admin-controls-wrapper { margin-top: 30px; }
+    </style>
+</head>
+<body class="registration-page">
+
+    <header class="main-header dashboard-header">
+        <div class="header-right-section">
+            <div class="logo">
+                <img src="images/logo.png" alt="لوقو ارتواء">
+            </div>
+            <nav class="nav-links">
+                <a href="index.html">الرئيسية</a>
+                <a href="structure.html">الهيكل التنظيمي</a>
+            </nav>
+        </div>
+        <button class="btn-login" type="button" id="logout-button">تسجيل الخروج</button>
+    </header>
+
+    <main class="container dashboard-container">
+        <div class="register-card dashboard-register-card">
+            <p id="dashboard-message" class="data-message" role="status"></p>
+            
+            <!-- معلومات الترحيب والدور -->
+            <div class="dashboard-profile-row">
+                <div class="dashboard-profile-icon">
+                    <i class="fa-solid fa-user-gear" id="user-icon"></i>
+                </div>
+                <div>
+                    <h2 class="dashboard-welcome-title" id="welcome-name">مرحباً بك</h2>
+                    <p class="dashboard-profile-text" id="user-role-title">جاري التحقق من البيانات...</p>
+                </div>
+            </div>
+
+            <!-- ================= قسم العضو المستفيد / العادي ================= -->
+            <div id="member-card-section" class="hidden-element">
+                <div class="dashboard-summary-grid">
+                    <div class="dashboard-stat-card">
+                        <h4><i class="fa-solid fa-circle-info admin-icon"></i> حالة العضوية</h4>
+                        <span class="dashboard-status" id="membership-status">جارِ التحميل...</span>
+                        <p class="dashboard-card-description" id="membership-description"></p>
+                    </div>
+
+                    <div class="dashboard-stat-card">
+                        <h4><i class="fa-solid fa-bolt admin-icon"></i> مساهماتك الرقمية</h4>
+                        <ul class="dashboard-stat-list">
+                            <li><i class="fa-solid fa-check admin-icon"></i> الساعات المعتمدة: <span id="verified-hours">0</span> ساعة</li>
+                            <li><i class="fa-solid fa-check admin-icon"></i> الفعاليات المسجل بها: <span id="registered-events-count">0</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3 class="admin-section-subtitle">مهام وإجراءات سريعة</h3>
+                <div class="dashboard-action-row">
+                    <button class="btn-submit" type="button" onclick="window.location.href='events.html'">تصفح الورش القادمة</button>
+                    <button class="btn-secondary" type="button" id="show-contribution-form">رفع تقرير المساهمة</button>
+                </div>
+                <form id="contribution-form" class="dashboard-extra" hidden>
+                    <div class="form-group">
+                        <label class="form-group__label" for="contribution-description">وصف المساهمة</label>
+                        <textarea id="contribution-description" class="form-group__textarea" maxlength="5000" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="contribution-hours">عدد الساعات</label>
+                        <input id="contribution-hours" type="number" min="0.01" max="1000" step="0.01" class="form-group__input" required>
+                    </div>
+                    <button type="submit" class="btn-submit">إرسال التقرير للمراجعة</button>
+                </form>
+                <h3 class="admin-section-subtitle dashboard-extra">فعالياتي</h3>
+                <ul id="courses-list" class="dashboard-stat-list"></ul>
+                <h3 class="admin-section-subtitle dashboard-extra">طلبات خدماتي</h3>
+                <ul id="my-requests-list" class="dashboard-stat-list"></ul>
+                <h3 class="admin-section-subtitle dashboard-extra">تقارير مساهماتي</h3>
+                <ul id="contributions-list" class="dashboard-stat-list"></ul>
+            </div>
+
+            <!-- ================= قسم الإدارة التحكم الخاص بالآدمن (Admin Section) ================= -->
+            <div id="admin-controls" class="hidden-element admin-controls-wrapper">
+                <h3 class="admin-section-title">
+                    <i class="fa-solid fa-calendar-plus admin-icon"></i>إضافة فعالية جديدة
+                </h3>
+                
+                <form id="add-event-form" class="admin-form-margin">
+                    <div class="form-group">
+                        <label class="form-group__label" for="event-title">عنوان الفعالية</label>
+                        <input type="text" id="event-title" class="form-group__input" placeholder="مثال: ورشة الأمن السيبراني" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="event-desc">وصف الفعالية</label>
+                        <textarea id="event-desc" class="form-group__textarea" rows="2" placeholder="أدخل تفاصيل ومحاور الفعالية" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-group__label" for="event-date">التاريخ</label>
+                            <input type="date" id="event-date" class="form-group__input" placeholder="15 أبريل 2026" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-group__label" for="event-time">الوقت</label>
+                            <input type="time" id="event-time" class="form-group__input" placeholder="6:00 مساءً" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="event-loc">المكان / الرابط</label>
+                        <input type="text" id="event-loc" class="form-group__input" placeholder="أونلاين أو الطائف" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-group__label" for="event-image">رابط صورة الفعالية (اختياري)</label>
+                            <input type="url" id="event-image" class="form-group__input" placeholder="https://example.com/event.png" maxlength="2000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-group__label" for="event-capacity">عدد المقاعد (اختياري)</label>
+                            <input type="number" id="event-capacity" class="form-group__input" min="1" max="100000" step="1" placeholder="بدون حد عند تركه فارغاً">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit btn-submit-margin">إضافة الفعالية للمنصة +</button>
+                </form>
+
+                <h3 class="admin-section-subtitle">
+                    <i class="fa-solid fa-list-check admin-icon"></i>إدارة الفعاليات الحالية
+                </h3>
+                
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>اسم الفعالية</th>
+                            <th>التاريخ والمشاركون</th>
+                            <th class="align-left">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-events-list">
+                        <!-- تُعرض الفعاليات هنا ديناميكياً -->
+                    </tbody>
+                </table>
+                <h3 class="admin-section-subtitle dashboard-extra">طلبات الانضمام</h3>
+                <div class="table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>المتقدم</th><th>اللجنة</th><th>الحالة</th><th>الإجابات</th><th>الإجراءات</th></tr></thead>
+                        <tbody id="admin-applications-list"></tbody>
+                    </table>
+                </div>
+                <h3 class="admin-section-subtitle dashboard-extra">طلبات الخدمات الرقمية</h3>
+                <div class="table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>العميل</th><th>البريد</th><th>الخدمة</th><th>التفاصيل</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+                        <tbody id="admin-requests-list"></tbody>
+                    </table>
+                </div>
+                <h3 class="admin-section-subtitle dashboard-extra">مراجعة تقارير المساهمة</h3>
+                <div class="table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>العضو</th><th>التقرير</th><th>الساعات</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+                        <tbody id="admin-contributions-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
+    <script src="supabase-config.js"></script>
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+    <script src="main.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
