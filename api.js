@@ -258,12 +258,6 @@
             caption: optionalText(input.caption, 'الوصف المختصر', 200)
         }).eq('slug', slug).select('slug').single());
     }
-    async function structureData() {
-        return Promise.all([
-            result(getClient().from('platform_settings').select('leader_name, deputy_name').eq('id', true).single()),
-            result(getClient().from('departments').select('*').order('sort_order'))
-        ]);
-    }
     function errorMessage(error) {
         if (error?.code === 'invalid_credentials') return 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
         if (error?.code === 'email_not_confirmed') return 'يرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول.';
@@ -281,6 +275,6 @@
         getUser, getProfile, signUp, signIn, signOut, listEvents, registeredEventIds,
         registerForEvent, addEvent, updateEvent, setEventPublished, deleteEvent, submitServiceRequest, submitContribution,
         dashboardData, adminData, reviewApplication, updateStatus, listMembers, setMemberRole,
-        siteContent, saveSettings, saveDepartment, saveStat, structureData, errorMessage
+        siteContent, saveSettings, saveDepartment, saveStat, errorMessage
     };
 })(window);

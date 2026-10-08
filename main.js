@@ -39,6 +39,11 @@
         } catch (_) { /* use local default */ }
         return 'images/web-dev-event.png';
     }
+    // Database text replaces the published HTML only when it is non-empty.
+    function fill(element, value) {
+        if (element && typeof value === 'string' && value.trim()) element.textContent = value;
+    }
+    const bySlug = items => new Map((items || []).map(item => [item.slug, item]));
     const dateLabel = value => new Intl.DateTimeFormat('ar-SA', { dateStyle: 'medium', calendar: 'gregory' }).format(new Date(`${value}T12:00:00+03:00`));
     window.ErtwaUI = { node, message, busy, services, statuses };
 
@@ -229,20 +234,43 @@
     async function loadStructure() {
         if (!document.getElementById('departments-list')) return;
         try {
-            const [settings, departments] = await api.structureData();
+            const { settings, departments } = await api.siteContent();
             document.getElementById('platform-leader-name').textContent = settings.leader_name || 'غير محدد';
             document.getElementById('platform-deputy-name').textContent = settings.deputy_name || 'غير محدد';
-            document.querySelectorAll('#departments-list .dept-card-box').forEach(card => {
-                const department = departments.find(item => item.display_name === card.querySelector('.dept-card-title').textContent.trim());
+            document.querySelectorAll('[data-title]').forEach(element => fill(element, settings[element.dataset.title]));
+            const saved = bySlug(departments);
+            document.querySelectorAll('#departments-list .dept-card-box[data-dept]').forEach(card => {
+                const department = saved.get(card.dataset.dept);
                 if (!department) return;
                 card.querySelector('.dept-person-name').textContent = department.leader || 'غير محدد';
                 card.querySelector('.dept-deputy-name').textContent = department.deputy || 'غير محدد';
+                fill(card.querySelector('.dept-leader-tag'), department.leader_title);
+                fill(card.querySelector('.dept-deputy-tag'), department.deputy_title);
             });
         } catch (error) { message(document.getElementById('departments-list'), api.errorMessage(error), true); }
     }
 
+    // On any failure the homepage keeps the text already in its HTML.
+    async function loadHomeContent() {
+        if (!document.querySelector('[data-stat]')) return;
+        let content;
+        try { content = await api.siteContent(); } catch (_) { return; }
+        document.querySelectorAll('[data-content]').forEach(element => fill(element, content.settings?.[element.dataset.content]));
+        const departments = bySlug(content.departments);
+        document.querySelectorAll('.spec-card[data-dept]').forEach(card => fill(card.querySelector('p'), departments.get(card.dataset.dept)?.description));
+        const stats = bySlug(content.stats);
+        document.querySelectorAll('[data-stat]').forEach(card => {
+            const stat = stats.get(card.dataset.stat);
+            if (!stat) return;
+            const number = card.querySelector('.stat-number');
+            if (stat.value?.trim()) { number.dataset.final = stat.value; number.textContent = stat.value; }
+            fill(card.querySelector('.stat-label'), stat.label);
+            fill(card.querySelector('.stat-sub'), stat.caption);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         setupLogin(); setupRegistration(); setupOrders(); setupDashboard();
-        loadEvents(); loadDashboard(); loadStructure();
+        loadEvents(); loadDashboard(); loadStructure(); loadHomeContent();
     });
 })();

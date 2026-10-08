@@ -258,6 +258,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const startCounters = () => {
             statNumbers.forEach(stat => {
                 const fullText = stat.textContent.trim();
+                // Values without digits are shown exactly as written.
+                if (!/[0-9]/.test(fullText)) return;
                 const targetNumber = parseInt(fullText.replace(/[^0-9]/g, ''), 10);
                 const suffix = fullText.replace(/[0-9]/g, ''); 
                 
@@ -268,6 +270,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const increment = targetNumber > 100 ? Math.ceil(targetNumber / 80) : 1;
 
                 const counter = setInterval(() => {
+                    // A database value that arrives mid-animation replaces the old number.
+                    if (stat.dataset.final && stat.dataset.final !== fullText) {
+                        stat.textContent = stat.dataset.final;
+                        clearInterval(counter);
+                        return;
+                    }
                     current += increment;
                     if (current >= targetNumber) {
                         stat.textContent = targetNumber + suffix;

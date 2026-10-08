@@ -8,15 +8,17 @@ const root = new URL('../', import.meta.url);
 const read = name => readFile(new URL(name, root), 'utf8');
 const flush = async () => { for (let i = 0; i < 8; i++) await new Promise(resolve => setImmediate(resolve)); };
 
-async function page(name, api) {
+// Extra scripts run after main.js (they read window.ErtwaUI); setup runs once the HTML is in place.
+async function page(name, api, { scripts = [], setup } = {}) {
     const window = new Window({ url: `http://localhost:5500/${name}`, settings: {
         enableJavaScriptEvaluation: true, disableCSSFileLoading: true,
         disableJavaScriptFileLoading: true, disableComputedStyleRendering: true,
         suppressInsecureJavaScriptEnvironmentWarning: true
     } });
     window.document.write(await read(name));
+    setup?.(window);
     window.ErtwaAPI = { errorMessage: error => error.message, ...api };
-    window.eval(await read('main.js'));
+    for (const script of ['main.js', ...scripts]) window.eval(await read(script));
     window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
     await flush();
     return window;
@@ -118,5 +120,50 @@ test('member dashboard displays database values and ignores local admin flags', 
     assert.match(window.document.getElementById('welcome-name').textContent, /اسم حقيقي/);
     assert.equal(window.document.getElementById('verified-hours').textContent, '0');
     assert.equal(window.document.getElementById('membership-status').textContent, 'قيد المراجعة');
+    await window.happyDOM.close();
+});
+
+test('homepage shows database content as text and keeps its own text when loading fails', async () => {
+    const content = { settings: { hero_text: '<img src=x onerror=alert(1)>', mission_text: '', vision_text: 'رؤية جديدة' },
+        departments: [{ slug: 'media', description: 'وصف الإعلام' }], stats: [{ slug: 'members', value: '60+', label: 'عضو', caption: '' }] };
+    const ok = await page('index.html', { siteContent: async () => content, listEvents: async () => [], registeredEventIds: async () => [] });
+    const doc = ok.document;
+    assert.equal(doc.querySelector('[data-content="hero_text"]').textContent, content.settings.hero_text);
+    assert.equal(doc.querySelector('[data-content="hero_text"] img'), null);
+    assert.match(doc.querySelector('[data-content="mission_text"]').textContent, /المعرفة حق للجميع/);
+    assert.equal(doc.querySelector('[data-content="vision_text"]').textContent, 'رؤية جديدة');
+    assert.equal(doc.querySelector('[data-dept="media"] p').textContent, 'وصف الإعلام');
+    assert.equal(doc.querySelector('[data-stat="members"] .stat-number').textContent, '60+');
+    assert.equal(doc.querySelector('[data-stat="members"] .stat-sub').textContent, 'من مختلف التخصصات التقنية');
+    await ok.happyDOM.close();
+    const failed = await page('index.html', { siteContent: async () => { throw new Error('offline'); }, listEvents: async () => [], registeredEventIds: async () => [] });
+    assert.equal(failed.document.querySelector('[data-stat="followers"] .stat-number').textContent, '10K+');
+    await failed.happyDOM.close();
+});
+
+test('stat counters show text values as-is and finish on a late database value', async () => {
+    const setup = w => {
+        w.IntersectionObserver = class { constructor(cb) { this.cb = cb; } observe(el) { this.cb([{ isIntersecting: true, target: el }]); } unobserve() {} };
+        w.document.querySelector('[data-stat="events"] .stat-number').textContent = 'قريباً';
+    };
+    const window = await page('index.html', { siteContent: () => new Promise(() => {}), listEvents: async () => [], registeredEventIds: async () => [] },
+        { scripts: ['script.js'], setup });
+    const late = window.document.querySelector('[data-stat="members"] .stat-number');
+    late.dataset.final = '75+'; late.textContent = '75+';
+    await new Promise(resolve => setTimeout(resolve, 100));
+    assert.equal(window.document.querySelector('[data-stat="events"] .stat-number').textContent, 'قريباً');
+    assert.equal(late.textContent, '75+');
+    await window.happyDOM.close();
+});
+
+test('structure page fills leaders and titles by department slug', async () => {
+    const window = await page('structure.html', { siteContent: async () => ({
+        settings: { leader_name: 'قائد', deputy_name: 'نائبة', leader_title: 'قائدة المنصة', deputy_title: 'نائبة القائد' },
+        departments: [{ slug: 'tech', leader: '', deputy: 'سامي', leader_title: 'قائد القسم', deputy_title: 'نائب القسم' }], stats: [] }) });
+    const tech = window.document.querySelector('[data-dept="tech"]');
+    assert.equal(tech.querySelector('.dept-person-name').textContent, 'غير محدد');
+    assert.equal(tech.querySelector('.dept-leader-tag').textContent, 'قائد القسم');
+    assert.equal(window.document.querySelector('[data-title="leader_title"]').textContent, 'قائدة المنصة');
+    assert.ok(window.document.querySelector('.leader-label i'));
     await window.happyDOM.close();
 });
