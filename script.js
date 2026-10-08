@@ -89,50 +89,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 8. مصفوفة أسئلة اللجان الستة المعتمدة
     const committeeQuestions = {
-        "التقنية": [
+        tech: [
             { type: "checkbox", text: "ما هي لغات البرمجة التي تتقنها؟", required: true, options: ["JavaScript", "Python", "Java", "C++", "أخرى"] },
             { type: "radio", text: "ما مستوى خبرتك في البرمجة؟", required: true, options: ["مبتدئ", "متوسط", "متقدم", "محترف"] },
             { type: "textarea", text: "صف لنا مشروعاً برمجياً قمت بتطويره", required: true, placeholder: "اكتب وصفاً للمشروع..." },
             { type: "text", text: "ما هي التقنيات والأطر (Frameworks) التي تستخدمها؟", required: true, placeholder: "مثال: React, Node.js, Laravel..." },
             { type: "text", text: "هل لديك حساب على GitHub أو موقع شخصي؟ (اختياري)", required: false, placeholder: "https://github.com/username" }
         ],
-        "التصميم": [
+        design: [
             { type: "checkbox", text: "ما هي مجالات التصميم التي تبدع فيها؟", required: true, options: ["تصميم واجهات UI/UX", "هويات بصرية وشعارات", "منشورات وسائل التواصل", "أخرى"] },
             { type: "radio", text: "ما هي الأداة أو البرنامج الأساسي والمفضل لديك؟", required: true, options: ["Figma", "Adobe Illustrator", "Adobe Photoshop"] },
             { type: "textarea", text: "صف لنا أسلوبك في التصميم أو تحدٍ واجهته في مشروع سابق وكيف حللته.", required: true, placeholder: "اكتب تجربتك هنا..." },
             { type: "text", text: "أرفق رابط معرض أعمالك السابقة (Portfolio).", required: true, placeholder: "Behance, Dribbble, Drive..." }
         ],
-        "الفعاليات والعلاقات": [
+        events: [
             { type: "radio", text: "هل لديك خبرة سابقة في تنظيم وإدارة الفعاليات (الواقعية أو عن بعد)؟", required: true, options: ["نعم", "لا"] },
             { type: "checkbox", text: "ما هي المهارات التي تجد نفسك متمكناً فيها؟", required: true, options: ["التخطيط اللوجستي", "التقديم وإدارة الحوار", "التواصل مع المتحدثين", "بناء الشراكات والاستقطاب"] },
             { type: "textarea", text: "اذكر فعالية تقنية شاركت في تنظيمها سابقاً، وماذا كان دورك بالتحديد؟", required: true, placeholder: "اسم الفعالية ودورك بالتحديد..." },
             { type: "textarea", text: "لو اعتذر أحد المتحدثين قبل انطلاق الورشة بـ 30 دقيقة، كيف ستتصرف؟", required: true, placeholder: "اكتب خطتك البديلة هنا..." }
         ],
-        "المتابعة والتطوير": [
+        quality: [
             { type: "radio", text: "كيف تقيم مستوى إتقانك لأدوات إدارة المشاريع والمتابعة؟", required: true, options: ["مبتدئ", "متوسط", "متقدم"] },
             { type: "checkbox", text: "ما هي الأدوات التي تفضل استخدامها لمتابعة سير العمل؟", required: true, options: ["Trello", "ClickUp", "Notion", "Excel / Google Sheets"] },
             { type: "textarea", text: "كيف تتعامل مع عضو في الفريق يتأخر باستمرار في تسليم المهام الموكلة إليه؟", required: true, placeholder: "اكتب أسلوبك في التعامل هنا..." },
             { type: "textarea", text: "من وجهة نظرك، ما هي أفضل طريقة لضمان جودة مخرجات اللجان قبل إطلاقها للعلن؟", required: true, placeholder: "اكتب وجهة نظرك هنا..." }
         ],
-        "الإعلام": [
+        media: [
             { type: "checkbox", text: "ما هو مجالك الإعلامي الأساسي؟", required: true, options: ["صناعة ومونتاج الفيديو", "التصوير الفوتوغرافي/السينمائي", "التغطيات الحية وإدارة الحسابات", "التعليق الصوتي"] },
             { type: "checkbox", text: "ما هي البرامج التي تستخدمها بمهارة في إنتاجك؟", required: true, options: ["Premiere Pro", "After Effects", "DaVinci Resolve", "Photoshop/Lightroom", "أخرى"] },
             { type: "textarea", text: "إذا طُلب منك إعداد خطة تغطية إعلامية سريعة لفعالية تقنية مباشرة، ما هي الأدوات والخطوات التي ستعتمد عليها؟", required: true, placeholder: "اكتب خطتك الإعلامية هنا..." },
             { type: "text", text: "أرفق رابطاً لنماذج من إنتاجك المرئي أو الفوتوغرافي.", required: true, placeholder: "Drive, Behance, YouTube..." }
         ],
-        "المحتوى": [
+        content: [
             { type: "checkbox", text: "ما هي أنواع المحتوى التي تفضل كتابتها وصياغتها؟", required: true, options: ["ثريدات منصة X التقنية", "مقالات ومناهج تعليمية", "سيناريو للفيديوهات والبودكاست", "محتوى تسويقي وإعلاني"] },
             { type: "radio", text: "كيف تقيم قدرتك على تبسيط المفاهيم التقنية المعقدة للمجتمع العام؟", required: true, options: ["ممتازة", "جيدة جداً", "أحتاج لتطويرها"] },
             { type: "textarea", text: "اكتب نصاً تشويقياً قصيراً (لا يتجاوز سطرين) للإعلان عن ورشة عمل قادمة في 'الذكاء الاصطناعي'.", required: true, placeholder: "اكتب النص التشويقي هنا..." },
             { type: "text", text: "أرفق نموذجاً أو رابطاً لكتابات سابقة قمت بإعدادها إن وجد.", required: false, placeholder: "رابط ثريد, مقال، أو ملف..." }
+        ],
+        // Used by departments added from the dashboard.
+        standard: [
+            { type: "radio", text: "ما مستوى خبرتك في مجال هذه اللجنة؟", required: true, options: ["مبتدئ", "متوسط", "متقدم"] },
+            { type: "textarea", text: "ما المهارات التي تمتلكها وتفيد هذه اللجنة؟", required: true, placeholder: "اذكر مهاراتك..." },
+            { type: "textarea", text: "لماذا ترغب بالانضمام إلى هذه اللجنة؟", required: true, placeholder: "اكتب سببك..." },
+            { type: "text", text: "أرفق رابطاً لأعمال سابقة إن وجد.", required: false, placeholder: "رابط..." }
         ]
     };
 
     // 9. وظيفة الانتقال للأسئلة وبنائها ديناميكياً
-    function goToQuestions(committeeName) {
+    function goToQuestions(slug, committeeName) {
         const titleElem = document.getElementById('committeeQuestionTitle');
         if (titleElem) {
             titleElem.textContent = committeeName;
+            titleElem.dataset.slug = slug;
         }
         
         if (step2Container && step3Container) {
@@ -159,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (questionsArea) {
             questionsArea.innerHTML = ""; 
             
-            const questions = committeeQuestions[committeeName] || committeeQuestions["التقنية"];
+            const questions = committeeQuestions[slug] || committeeQuestions.standard;
             
             questions.forEach((q, index) => {
                 const requiredStars = q.required ? '<span class="q-required" style="color: #ef4444; margin-right: 4px;">*</span>' : '';
@@ -195,21 +203,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 10. ربط حدث الضغط على بطاقات اللجان
-    const cards = document.querySelectorAll('.committee-card');
-    if (cards.length > 0) {
-        cards.forEach(card => {
-            card.addEventListener('click', function() {
-                cards.forEach(c => c.classList.remove('selected'));
-                this.classList.add('selected');
-
-                const nameElement = this.querySelector('.committee-card__name');
-                if (nameElement) {
-                    const name = nameElement.textContent.trim();
-                    setTimeout(() => goToQuestions(name), 400); 
-                }
-            });
-        });
-    }
+    // Delegated, because the cards are re-rendered from the database by departments.js.
+    const committeesGrid = document.querySelector('.committees-grid');
+    committeesGrid?.addEventListener('click', function(event) {
+        const card = event.target.closest('.committee-card');
+        if (!card) return;
+        committeesGrid.querySelectorAll('.committee-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        const name = card.querySelector('.committee-card__name')?.textContent.trim() || '';
+        setTimeout(() => goToQuestions(card.dataset.slug, name), 400);
+    });
 
     // 11. العودة من الخطوة الثالثة إلى الخطوة الثانية
     document.getElementById('backToStep2')?.addEventListener('click', function(e) {
@@ -227,28 +230,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 13. تصفية وعرض القسم المختار داخل صفحة departments.html
-    const deptCards = document.querySelectorAll('.departments-page-container .info-card');
-    if (deptCards.length > 0) {
-        function filterDepartments() {
-            const currentHash = window.location.hash; 
-            if (currentHash && currentHash.includes('-dept')) {
-                deptCards.forEach(card => {
-                    if ('#' + card.id === currentHash) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            } else {
-                deptCards.forEach(card => {
-                    card.style.display = 'block';
-                });
-            }
-        }
-        window.addEventListener('load', filterDepartments);
-        window.addEventListener('hashchange', filterDepartments);
-    }
 
     // Animate the existing published statistics once when visible.
     const statsSection = document.querySelector('.stats-section');

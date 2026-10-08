@@ -45,7 +45,13 @@
     }
     const bySlug = items => new Map((items || []).map(item => [item.slug, item]));
     const dateLabel = value => new Intl.DateTimeFormat('ar-SA', { dateStyle: 'medium', calendar: 'gregory' }).format(new Date(`${value}T12:00:00+03:00`));
-    window.ErtwaUI = { node, message, busy, services, statuses };
+    // One request per page for settings, departments and stats; a failure allows a retry.
+    let contentRequest;
+    function content() {
+        contentRequest ??= api.siteContent().catch(error => { contentRequest = undefined; throw error; });
+        return contentRequest;
+    }
+    window.ErtwaUI = { node, message, busy, fill, content, services, statuses };
 
     async function loadEvents() {
         const container = document.querySelector('.events-grid');
@@ -150,7 +156,6 @@
         password.addEventListener('input', validatePasswords);
         confirm.addEventListener('input', validatePasswords);
         const form = document.getElementById('questionsForm');
-        const slugs = { 'التقنية': 'tech', 'التصميم': 'design', 'الفعاليات والعلاقات': 'events', 'المتابعة والتطوير': 'quality', 'الإعلام': 'media', 'المحتوى': 'content' };
         form.addEventListener('submit', async event => {
             event.preventDefault();
             try {
@@ -165,7 +170,7 @@
                     full_name: document.getElementById('fullName').value, email: document.getElementById('userEmail').value,
                     password: password.value, city: document.getElementById('userCity').value, age: document.getElementById('userAge').value,
                     specialization: document.getElementById('specializationSelect').value === 'other' ? document.getElementById('otherSpecializationInput').value : document.getElementById('specializationSelect').selectedOptions[0].textContent,
-                    department_slug: slugs[document.getElementById('committeeQuestionTitle').textContent.trim()], answers
+                    department_slug: document.getElementById('committeeQuestionTitle').dataset.slug, answers
                 }));
                 if (!data) return;
                 password.value = confirm.value = '';
@@ -258,31 +263,21 @@
     async function loadStructure() {
         if (!document.getElementById('departments-list')) return;
         try {
-            const { settings, departments } = await api.siteContent();
+            // Department cards are rendered by departments.js.
+            const { settings } = await content();
             document.getElementById('platform-leader-name').textContent = settings.leader_name || 'غير محدد';
             document.getElementById('platform-deputy-name').textContent = settings.deputy_name || 'غير محدد';
             document.querySelectorAll('[data-title]').forEach(element => fill(element, settings[element.dataset.title]));
-            const saved = bySlug(departments);
-            document.querySelectorAll('#departments-list .dept-card-box[data-dept]').forEach(card => {
-                const department = saved.get(card.dataset.dept);
-                if (!department) return;
-                card.querySelector('.dept-person-name').textContent = department.leader || 'غير محدد';
-                card.querySelector('.dept-deputy-name').textContent = department.deputy || 'غير محدد';
-                fill(card.querySelector('.dept-leader-tag'), department.leader_title);
-                fill(card.querySelector('.dept-deputy-tag'), department.deputy_title);
-            });
         } catch (error) { message(document.getElementById('departments-list'), api.errorMessage(error), true); }
     }
 
     // On any failure the homepage keeps the text already in its HTML.
     async function loadHomeContent() {
         if (!document.querySelector('[data-stat]')) return;
-        let content;
-        try { content = await api.siteContent(); } catch (_) { return; }
-        document.querySelectorAll('[data-content]').forEach(element => fill(element, content.settings?.[element.dataset.content]));
-        const departments = bySlug(content.departments);
-        document.querySelectorAll('.spec-card[data-dept]').forEach(card => fill(card.querySelector('p'), departments.get(card.dataset.dept)?.description));
-        const stats = bySlug(content.stats);
+        let loaded;
+        try { loaded = await content(); } catch (_) { return; }
+        document.querySelectorAll('[data-content]').forEach(element => fill(element, loaded.settings?.[element.dataset.content]));
+        const stats = bySlug(loaded.stats);
         document.querySelectorAll('[data-stat]').forEach(card => {
             const stat = stats.get(card.dataset.stat);
             if (!stat) return;

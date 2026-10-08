@@ -913,3 +913,6 @@ a.btn-login { text-decoration: none; display: inline-block; }
 .admin-action.danger { background: #be123c; }
 button:disabled { opacity: 0.65; cursor: default; }
 [hidden] { display: none !important; }
+
+/* Departments added from the dashboard show a Font Awesome icon instead of artwork. */
+.spec-icon-box i, .committee-card__icon i { font-size: 1.8rem; color: var(--jungle-green); }

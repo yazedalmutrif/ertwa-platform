@@ -85,6 +85,7 @@ test('registration retains answers on failure and handles email confirmation wit
     } });
     fill(window, { fullName: 'عضو', userEmail: 'member@example.com', userPassword: 'UniquePassword123', confirmPassword: 'UniquePassword123', userCity: 'الرياض', userAge: '25', specializationSelect: 'cs' });
     window.document.getElementById('committeeQuestionTitle').textContent = 'التقنية';
+    window.document.getElementById('committeeQuestionTitle').dataset.slug = 'tech';
     window.document.getElementById('dynamicQuestions').innerHTML = '<div class="question-row" data-required="true"><span class="q-text">مشروعك *</span><textarea>مشروعي التقني</textarea></div>';
     submit(window, 'questionsForm'); await flush();
     assert.equal(submitted.department_slug, 'tech');
@@ -126,7 +127,7 @@ test('member dashboard displays database values and ignores local admin flags', 
 test('homepage shows database content as text and keeps its own text when loading fails', async () => {
     const content = { settings: { hero_text: '<img src=x onerror=alert(1)>', mission_text: '', vision_text: 'رؤية جديدة' },
         departments: [{ slug: 'media', description: 'وصف الإعلام' }], stats: [{ slug: 'members', value: '60+', label: 'عضو', caption: '' }] };
-    const ok = await page('index.html', { siteContent: async () => content, listEvents: async () => [], registeredEventIds: async () => [] });
+    const ok = await page('index.html', { siteContent: async () => content, listEvents: async () => [], registeredEventIds: async () => [] }, { scripts: ['departments.js'] });
     const doc = ok.document;
     assert.equal(doc.querySelector('[data-content="hero_text"]').textContent, content.settings.hero_text);
     assert.equal(doc.querySelector('[data-content="hero_text"] img'), null);
@@ -159,7 +160,7 @@ test('stat counters show text values as-is and finish on a late database value',
 test('structure page fills leaders and titles by department slug', async () => {
     const window = await page('structure.html', { siteContent: async () => ({
         settings: { leader_name: 'قائد', deputy_name: 'نائبة', leader_title: 'قائدة المنصة', deputy_title: 'نائبة القائد' },
-        departments: [{ slug: 'tech', leader: '', deputy: 'سامي', leader_title: 'قائد القسم', deputy_title: 'نائب القسم' }], stats: [] }) });
+        departments: [{ slug: 'tech', leader: '', deputy: 'سامي', leader_title: 'قائد القسم', deputy_title: 'نائب القسم' }], stats: [] }) }, { scripts: ['departments.js'] });
     const tech = window.document.querySelector('[data-dept="tech"]');
     assert.equal(tech.querySelector('.dept-person-name').textContent, 'غير محدد');
     assert.equal(tech.querySelector('.dept-leader-tag').textContent, 'قائد القسم');
@@ -300,5 +301,52 @@ test('headers show the dashboard and logout once signed in', async () => {
 test('the login page sends signed-in visitors to the dashboard', async () => {
     const window = await page('login.html', { getUser: async () => ({ id: 'u1' }) });
     assert.ok(window.location.href.endsWith('dashboard.html'));
+    await window.happyDOM.close();
+});
+
+const departmentsFixture = () => [
+    { slug: 'tech', name: 'التقنية', display_name: 'القسم التقني', page_title: 'القسم التقني (Technology Department)', description: 'تطوير', details: 'تفاصيل التقنية',
+        tasks: 'مهمة', icon: 'fa-code', image: 'images/Overlay(6).svg', active: true, sort_order: 1, leader: 'منار', deputy: 'سامي', leader_title: 'قائدة القسم', deputy_title: 'نائب القسم' },
+    { slug: 'dept-ai', name: '<img src=x onerror=1>', display_name: 'لجنة الذكاء', page_title: 'قسم الذكاء', description: 'وصف', details: 'تفاصيل',
+        tasks: 'مهمة ١\nمهمة ٢', icon: 'fa-lightbulb', image: '', active: true, sort_order: 7, leader: '', deputy: 'نائب', leader_title: 'قائد القسم', deputy_title: 'نائب القسم' },
+    { slug: 'media', name: 'الإعلام', display_name: 'اللجنة الإعلامية', page_title: 'قسم الإعلام', description: 'إعلام', details: '', tasks: '',
+        icon: 'fa-camera-retro', image: 'images/Overlay(4).svg', active: false, sort_order: 5, leader: '', deputy: '', leader_title: 'قائدة القسم', deputy_title: 'نائب القسم' }
+];
+
+test('every public page renders active departments as text and skips hidden ones', async () => {
+    const content = async () => ({ settings: {}, stats: [], departments: departmentsFixture() });
+    const pages = { 'index.html': '.spec-card', 'departments.html': '.departments-page-container .info-card', 'structure.html': '.dept-card-box', 'register.html': '.committee-card' };
+    for (const [name, selector] of Object.entries(pages)) {
+        const window = await page(name, { siteContent: content, listEvents: async () => [], registeredEventIds: async () => [] }, { scripts: ['departments.js'] });
+        const slugs = [...window.document.querySelectorAll(selector)].map(card => card.dataset.dept || card.dataset.slug);
+        assert.deepEqual(slugs, ['tech', 'dept-ai'], name);
+        assert.equal(window.document.querySelector(`${selector} img[src="x"]`), null, name);
+        await window.happyDOM.close();
+    }
+});
+
+test('the departments page shows every section for an unknown link', async () => {
+    const window = await page('departments.html', { siteContent: async () => ({ settings: {}, stats: [], departments: departmentsFixture() }) },
+        { scripts: ['departments.js'], setup: w => { w.location.hash = '#old-dept'; } });
+    const shown = [...window.document.querySelectorAll('.info-card')].filter(card => card.style.display !== 'none');
+    assert.equal(shown.length, 2);
+    await window.happyDOM.close();
+});
+
+test('choosing a new department signs up with its slug and the standard questions', async () => {
+    let submitted;
+    const window = await page('register.html', { siteContent: async () => ({ settings: {}, stats: [], departments: departmentsFixture() }),
+        signUp: async input => { submitted = input; return { user: { id: 'u' }, session: null }; } }, { scripts: ['script.js', 'departments.js'] });
+    window.document.querySelector('.committee-card[data-slug="dept-ai"]').click();
+    await new Promise(resolve => setTimeout(resolve, 450));
+    assert.equal(window.document.getElementById('committeeQuestionTitle').dataset.slug, 'dept-ai');
+    assert.equal(window.document.querySelectorAll('#dynamicQuestions .question-row').length, 4);
+    window.document.querySelectorAll('#dynamicQuestions .question-row').forEach(row => {
+        const radio = row.querySelector('input[type="radio"]'); if (radio) radio.checked = true;
+        row.querySelectorAll('textarea, input[type="text"]').forEach(input => { input.value = 'إجابة'; });
+    });
+    submit(window, 'questionsForm'); await flush();
+    assert.equal(submitted.department_slug, 'dept-ai');
+    assert.equal(submitted.answers.length, 4);
     await window.happyDOM.close();
 });
