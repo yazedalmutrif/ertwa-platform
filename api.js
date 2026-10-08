@@ -113,7 +113,8 @@
         const phone = String(value ?? '')
             .replace(/[\u0660-\u0669]/g, digit => String(digit.charCodeAt(0) - 0x0660))
             .replace(/[\u06F0-\u06F9]/g, digit => String(digit.charCodeAt(0) - 0x06F0))
-            .replace(/[\s()\-\u2010-\u2015]/g, '');
+            // Pasted numbers often carry invisible direction marks (e.g. from iPhone Contacts).
+            .replace(/[\s()\-\u2010-\u2015\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '');
         if (!/^\+?[0-9]{8,15}$/.test(phone)) throw new Error('يرجى إدخال رقم جوال صحيح.');
         return phone;
     }
@@ -308,6 +309,7 @@
         if (/Database error saving new user/i.test(error?.message || '')) return 'تعذر إنشاء الحساب: قد تكون اللجنة المختارة لم تعد متاحة. حدّث الصفحة واختر لجنة أخرى.';
         if (error?.code === '42501') return 'ليست لديك صلاحية لتنفيذ هذا الإجراء.';
         if (['23514', '22003', '22007'].includes(error?.code)) return 'بعض البيانات غير صحيحة. يرجى مراجعة الحقول.';
+        if (error?.code === '23505' && /departments_name_key/.test(error.message || '')) return 'يوجد قسم بهذا الاسم (قد يكون ضمن الأقسام المحذوفة). استخدم «إظهار» أو اختر اسماً آخر.';
         if (error?.code === '23505') return 'هذا الطلب مسجل بالفعل.';
         if (error?.code === 'P0001' || /[\u0600-\u06ff]/.test(error?.message || '')) return error.message;
         return 'تعذر إتمام الطلب. تحقق من اتصال الإنترنت وحاول مرة أخرى.';

@@ -414,3 +414,26 @@ test('the attendee CSV opens in Excel with Arabic, leading zeros and inert formu
     assert.match(csv, /"'=HYPERLINK\(""x""\)","a,b@x\.co","=""0551234567""",/);
     await window.happyDOM.close();
 });
+
+test('the attendee CSV also neutralises formulas that start with a tab or carriage return', async () => {
+    const window = await adminPage({});
+    const csv = window.ErtwaAdmin.attendeesCsv([{ created_at: '2099-04-01T10:00:00Z', phone: null, profiles: { full_name: '\t=1+1', email: '\r=2' } }]);
+    assert.match(csv, /"'\t=1\+1","'\r=2",/);
+    await window.happyDOM.close();
+});
+
+test('adding or hiding a department keeps unsaved edits in the other rows', async () => {
+    let departments = departmentsFixture();
+    const window = await adminPage({ siteContent: async () => ({ ...content(), departments }),
+        addDepartment: async () => { departments = [...departments, { ...departments[1], slug: 'dept-new', name: 'جديد', sort_order: 9 }]; return { slug: 'dept-new' }; },
+        setDepartmentActive: async () => {} });
+    window.confirm = () => true;
+    window.document.querySelector('[data-row="tech"] [name="details"]').value = 'نص لم يحفظ بعد';
+    const add = window.document.getElementById('add-department-form');
+    add.querySelector('[name="name"]').value = 'جديد';
+    add.querySelector('[name="display_name"]').value = 'لجنة جديدة';
+    add.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })); await flush();
+    assert.ok(window.document.querySelector('[data-row="dept-new"]'));
+    assert.equal(window.document.querySelector('[data-row="tech"] [name="details"]').value, 'نص لم يحفظ بعد');
+    await window.happyDOM.close();
+});

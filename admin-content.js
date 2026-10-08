@@ -143,16 +143,20 @@
         return row;
     }
 
-    function renderStructure({ settings, departments }) {
+    // keep: rows already on screen are reused, so unsaved typing survives an add, hide or restore.
+    function renderStructure({ settings, departments }, keep = false) {
         const sorted = [...departments].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
         const active = sorted.filter(department => department.active !== false);
         const hidden = sorted.filter(department => department.active === false);
-        document.getElementById('admin-structure-list').replaceChildren(platformRow(settings), ...active.map(departmentRow));
+        const list = document.getElementById('admin-structure-list');
+        const shown = keep ? new Map([...list.children].filter(row => row.dataset.row).map(row => [row.dataset.row, row])) : new Map();
+        list.replaceChildren(shown.get('platform') || platformRow(settings),
+            ...active.map(department => shown.get(department.slug) || departmentRow(department)));
         document.getElementById('admin-hidden-departments').replaceChildren(
             ...(hidden.length ? [node('h4', 'الأقسام المحذوفة (يمكن إظهارها مجدداً)')] : []), ...hidden.map(hiddenRow));
     }
     async function reloadStructure() {
-        try { renderStructure(await api.siteContent()); }
+        try { renderStructure(await api.siteContent(), true); }
         catch (error) { message(document.getElementById('admin-structure-list'), api.errorMessage(error), true); }
     }
 

@@ -58,7 +58,7 @@
         .format(new Date(value)).replace(',', '');
     const csvCell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
     // Text that Excel would treat as a formula is made inert with a leading apostrophe.
-    const inert = value => (/^[=+\-@]/.test(String(value ?? '')) ? `'${value}` : String(value ?? ''));
+    const inert = value => (/^[=+\-@\t\r]/.test(String(value ?? '')) ? `'${value}` : String(value ?? ''));
     // UTF-8 with a BOM so Excel shows Arabic; phones as ="…" so leading zeros survive.
     function attendeesCsv(rows) {
         const lines = ['الاسم,البريد,الجوال,وقت التسجيل', ...rows.map(row => [

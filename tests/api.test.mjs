@@ -125,3 +125,16 @@ test('a signup refused by the database explains the committee may be gone', asyn
     const { api } = await load({});
     assert.match(api.errorMessage({ message: 'Database error saving new user', status: 500 }), /اللجنة المختارة لم تعد متاحة/);
 });
+
+test('a pasted phone with invisible direction marks is accepted', async () => {
+    const { api } = await load({});
+    assert.equal(api.normalizePhone('‭+966 55 123 4567‬'), '+966551234567');
+    assert.equal(api.normalizePhone('‎0551234567‏'), '0551234567');
+});
+
+test('a department name already in use explains that it may be hidden', async () => {
+    const { api } = await load({});
+    const message = api.errorMessage({ code: '23505', message: 'duplicate key value violates unique constraint "departments_name_key"' });
+    assert.match(message, /يوجد قسم بهذا الاسم/);
+    assert.match(message, /إظهار/);
+});
