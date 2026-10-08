@@ -199,6 +199,29 @@
                 </div>
                 <h3 class="admin-section-subtitle dashboard-extra">الهيكل التنظيمي</h3>
                 <div id="admin-structure-list"></div>
+                <div id="admin-hidden-departments"></div>
+                <h4 class="admin-section-subtitle">إضافة قسم جديد</h4>
+                <form id="add-department-form" class="admin-fieldset">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-group__label" for="new-dept-name">اسم القسم</label>
+                            <input type="text" id="new-dept-name" name="name" class="form-group__input" maxlength="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-group__label" for="new-dept-display">العنوان في الهيكل التنظيمي</label>
+                            <input type="text" id="new-dept-display" name="display_name" class="form-group__input" maxlength="150" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="new-dept-description">الوصف المختصر</label>
+                        <textarea id="new-dept-description" name="description" class="form-group__textarea" rows="2" maxlength="500"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="new-dept-icon">الأيقونة</label>
+                        <select id="new-dept-icon" name="icon" class="form-group__select"></select>
+                    </div>
+                    <button type="submit" class="btn-submit">إضافة القسم</button>
+                </form>
                 <h3 class="admin-section-subtitle dashboard-extra">محتوى الصفحة الرئيسية</h3>
                 <form id="home-content-form" class="admin-form-margin" hidden>
                     <div class="form-group">

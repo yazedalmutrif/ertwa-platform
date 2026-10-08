@@ -220,8 +220,9 @@ test('members table offers role changes except on the signed-in admin', async ()
 const content = () => ({
     settings: { leader_name: 'رواء المالكي', deputy_name: 'رياض المالكي', leader_title: 'قائد المنصة', deputy_title: 'نائب القائد',
         hero_text: 'مقدمة', mission_text: 'رسالة', vision_text: 'رؤية' },
-    departments: [{ slug: 'design', display_name: 'لجنة التصميم', leader: 'شهد بخاري', deputy: 'رغد',
-        leader_title: 'قائدة القسم', deputy_title: 'نائبة القسم', description: 'وصف التصميم' }],
+    departments: [{ slug: 'design', name: 'التصميم', display_name: 'لجنة التصميم', page_title: 'قسم التصميم', details: 'تفاصيل التصميم',
+        tasks: 'مهمة أولى\nمهمة ثانية', icon: 'fa-palette', image: 'images/Overlay(1).svg', active: true, sort_order: 2,
+        leader: 'شهد بخاري', deputy: 'رغد', leader_title: 'قائدة القسم', deputy_title: 'نائبة القسم', description: 'وصف التصميم' }],
     stats: [{ slug: 'volunteer_hours', value: '400+', label: 'ساعة تطوعية معتمدة', caption: 'من منصة العمل التطوعي' },
         { slug: 'followers', value: '10K+', label: 'متابع', caption: 'عبر منصات التواصل الاجتماعي' }]
 });
@@ -234,7 +235,9 @@ test('admins save a department leader and title from the dashboard', async () =>
     form.querySelector('[name="leader"]').value = 'اسم جديد';
     form.querySelector('[name="leader_title"]').value = 'قائد القسم';
     form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })); await flush();
-    assert.deepEqual(saved, [['design', { leader: 'اسم جديد', leader_title: 'قائد القسم', deputy: 'رغد', deputy_title: 'نائبة القسم', description: 'وصف التصميم' }]]);
+    assert.deepEqual(saved, [['design', { name: 'التصميم', display_name: 'لجنة التصميم', page_title: 'قسم التصميم', description: 'وصف التصميم',
+        details: 'تفاصيل التصميم', tasks: 'مهمة أولى\nمهمة ثانية', icon: 'fa-palette',
+        leader: 'اسم جديد', leader_title: 'قائد القسم', deputy: 'رغد', deputy_title: 'نائبة القسم' }]]);
     assert.match(form.querySelector('.form-message').textContent, /تم الحفظ/);
     await window.happyDOM.close();
 });
@@ -370,5 +373,24 @@ test('registering for an event sends the typed phone and confirms only after sav
     form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })); await flush();
     assert.equal(card.querySelector('.btn-register').textContent, 'تم التسجيل ✓');
     assert.equal(card.querySelector('.event-phone'), null);
+    await window.happyDOM.close();
+});
+
+test('admins add, hide and restore departments from the dashboard', async () => {
+    const calls = [];
+    const window = await adminPage({ siteContent: async () => ({ ...content(), departments: departmentsFixture() }),
+        addDepartment: async input => { calls.push(['add', { ...input }]); return { slug: 'dept-new' }; },
+        setDepartmentActive: async (slug, active) => calls.push(['active', slug, active]) });
+    window.confirm = () => true;
+    const add = window.document.getElementById('add-department-form');
+    add.querySelector('[name="name"]').value = 'الأمن السيبراني';
+    add.querySelector('[name="display_name"]').value = 'لجنة الأمن';
+    add.querySelector('[name="icon"]').value = 'fa-shield-halved';
+    add.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })); await flush();
+    assert.deepEqual(calls[0], ['add', { name: 'الأمن السيبراني', display_name: 'لجنة الأمن', description: '', icon: 'fa-shield-halved' }]);
+    window.document.querySelector('[data-row="dept-ai"] .danger').click(); await flush();
+    assert.deepEqual(calls.at(-1), ['active', 'dept-ai', false]);
+    [...window.document.querySelectorAll('[data-hidden="media"] button')].find(b => b.textContent === 'إظهار').click(); await flush();
+    assert.deepEqual(calls.at(-1), ['active', 'media', true]);
     await window.happyDOM.close();
 });
