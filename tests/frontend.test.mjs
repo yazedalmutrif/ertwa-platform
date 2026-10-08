@@ -175,8 +175,9 @@ const adminPage = ({ events = [], members = [], ...api } = {}) => page('dashboar
         applications: [], registrations: [], contributions: [], requests: [], hours: 0 }),
     adminData: async () => ({ events, applications: [], requests: [], contributions: [] }),
     listMembers: async () => members,
+    siteContent: async () => ({ settings: {}, departments: [], stats: [] }),
     ...api
-}, { scripts: ['admin.js'] });
+}, { scripts: ['admin-content.js', 'admin.js'] });
 
 test('admins edit an existing event without re-entering it', async () => {
     const calls = [];
@@ -210,5 +211,41 @@ test('members table offers role changes except on the signed-in admin', async ()
     assert.equal(rows[1].querySelector('button').textContent, 'ترقية لمشرف');
     rows[1].querySelector('button').click(); await flush();
     assert.deepEqual(changes, [['u2', 'admin']]);
+    await window.happyDOM.close();
+});
+
+const content = () => ({
+    settings: { leader_name: 'رواء المالكي', deputy_name: 'رياض المالكي', leader_title: 'قائد المنصة', deputy_title: 'نائب القائد',
+        hero_text: 'مقدمة', mission_text: 'رسالة', vision_text: 'رؤية' },
+    departments: [{ slug: 'design', display_name: 'لجنة التصميم', leader: 'شهد بخاري', deputy: 'رغد',
+        leader_title: 'قائدة القسم', deputy_title: 'نائبة القسم', description: 'وصف التصميم' }],
+    stats: [{ slug: 'volunteer_hours', value: '400+', label: 'ساعة تطوعية معتمدة', caption: 'من منصة العمل التطوعي' },
+        { slug: 'followers', value: '10K+', label: 'متابع', caption: 'عبر منصات التواصل الاجتماعي' }]
+});
+
+test('admins save a department leader and title from the dashboard', async () => {
+    const saved = [];
+    const window = await adminPage({ siteContent: async () => content(),
+        saveDepartment: async (slug, input) => saved.push([slug, { ...input }]) });
+    const form = window.document.querySelector('#admin-structure-list [data-row="design"]');
+    form.querySelector('[name="leader"]').value = 'اسم جديد';
+    form.querySelector('[name="leader_title"]').value = 'قائد القسم';
+    form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })); await flush();
+    assert.deepEqual(saved, [['design', { leader: 'اسم جديد', leader_title: 'قائد القسم', deputy: 'رغد', deputy_title: 'نائبة القسم', description: 'وصف التصميم' }]]);
+    assert.match(form.querySelector('.form-message').textContent, /تم الحفظ/);
+    await window.happyDOM.close();
+});
+
+test('home content saves texts then each stat and reports the first error, keeping the input', async () => {
+    const calls = [];
+    const window = await adminPage({ siteContent: async () => content(),
+        saveSettings: async input => calls.push(['settings', { ...input }]),
+        saveStat: async (slug, input) => { calls.push([slug, { ...input }]); if (slug === 'followers') throw new Error('بعض البيانات غير صحيحة. يرجى مراجعة الحقول.'); } });
+    window.document.getElementById('content-vision').value = 'رؤية طويلة';
+    submit(window, 'home-content-form'); await flush();
+    assert.deepEqual(calls[0], ['settings', { hero_text: 'مقدمة', mission_text: 'رسالة', vision_text: 'رؤية طويلة' }]);
+    assert.deepEqual(calls.slice(1).map(call => call[0]), ['volunteer_hours', 'followers']);
+    assert.match(window.document.querySelector('#home-content-form .form-message').textContent, /غير صحيحة/);
+    assert.equal(window.document.getElementById('content-vision').value, 'رؤية طويلة');
     await window.happyDOM.close();
 });

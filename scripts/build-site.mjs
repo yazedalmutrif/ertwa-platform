@@ -8,7 +8,7 @@ const pages = [
     'login.html', 'order.html', 'register.html', 'structure.html'
 ];
 const assets = [
-    'api.js', 'admin.js', 'main.js', 'script.js', 'supabase-config.js',
+    'api.js', 'admin.js', 'admin-content.js', 'main.js', 'script.js', 'supabase-config.js',
     'style.css', 'register.css', 'images'
 ];
 

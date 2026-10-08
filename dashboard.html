@@ -34,6 +34,7 @@
         .btn-submit-margin { margin-top: 10px; }
         .align-left { text-align: left; }
         .hidden-element { display: none; }
+        .admin-fieldset { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; }
         .admin-controls-wrapper { margin-top: 30px; }
     </style>
 </head>
@@ -196,6 +197,25 @@
                         <tbody id="admin-members-list"></tbody>
                     </table>
                 </div>
+                <h3 class="admin-section-subtitle dashboard-extra">الهيكل التنظيمي</h3>
+                <div id="admin-structure-list"></div>
+                <h3 class="admin-section-subtitle dashboard-extra">محتوى الصفحة الرئيسية</h3>
+                <form id="home-content-form" class="admin-form-margin">
+                    <div class="form-group">
+                        <label class="form-group__label" for="content-hero">نص المقدمة</label>
+                        <textarea id="content-hero" class="form-group__textarea" rows="3" maxlength="1000"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="content-mission">رسالتنا</label>
+                        <textarea id="content-mission" class="form-group__textarea" rows="2" maxlength="1000"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-group__label" for="content-vision">رؤيتنا</label>
+                        <textarea id="content-vision" class="form-group__textarea" rows="2" maxlength="1000"></textarea>
+                    </div>
+                    <div id="admin-stats-list"></div>
+                    <button type="submit" class="btn-submit btn-submit-margin">حفظ المحتوى</button>
+                </form>
             </div>
 
         </div>
@@ -206,6 +226,7 @@
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="main.js"></script>
+    <script src="admin-content.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>

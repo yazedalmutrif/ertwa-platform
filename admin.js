@@ -145,6 +145,7 @@
             });
         }
         await refresh();
+        await window.ErtwaAdminContent.initialize();
     }
     window.ErtwaAdmin = { initialize };
 })();
