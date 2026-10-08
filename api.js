@@ -71,7 +71,8 @@
         const age = number(input.age, 'العمر', 1, 120);
         if (!Number.isInteger(age)) throw new Error('يرجى إدخال العمر بالسنوات.');
         if (!input.password || input.password.length < 8) throw new Error('كلمة المرور يجب أن تتكون من 8 أحرف على الأقل.');
-        if (!['tech', 'design', 'events', 'quality', 'media', 'content'].includes(input.department_slug)) throw new Error('يرجى اختيار اللجنة.');
+        // The database decides whether the department exists and is still shown.
+        if (!/^[a-z0-9-]{1,40}$/.test(String(input.department_slug ?? ''))) throw new Error('يرجى اختيار اللجنة.');
         if (!Array.isArray(input.answers) || !input.answers.length || JSON.stringify(input.answers).length > 10000) throw new Error('يرجى مراجعة إجابات الأسئلة.');
         const data = await result(getClient().auth.signUp({
             email: email(input.email), password: input.password,
@@ -107,9 +108,25 @@
         const rows = await result(getClient().from('event_registrations').select('event_id').eq('user_id', user.id));
         return rows.map(row => row.event_id);
     }
-    async function registerForEvent(eventId) {
+    // Accepts Arabic-Indic and Persian digits, spaces, dashes and brackets; returns e.g. 0551234567.
+    function normalizePhone(value) {
+        const phone = String(value ?? '')
+            .replace(/[\u0660-\u0669]/g, digit => String(digit.charCodeAt(0) - 0x0660))
+            .replace(/[\u06F0-\u06F9]/g, digit => String(digit.charCodeAt(0) - 0x06F0))
+            .replace(/[\s()\-\u2010-\u2015]/g, '');
+        if (!/^\+?[0-9]{8,15}$/.test(phone)) throw new Error('يرجى إدخال رقم جوال صحيح.');
+        return phone;
+    }
+    async function registerForEvent(eventId, phone) {
+        const normalized = normalizePhone(phone);
         await requireUser();
-        return result(getClient().rpc('register_for_event', { p_event_id: eventId }));
+        return result(getClient().rpc('register_for_event', { p_event_id: eventId, p_phone: normalized }));
+    }
+    async function eventRegistrations(eventId) {
+        await requireAdmin();
+        return result(getClient().from('event_registrations')
+            .select('created_at, phone, profiles!event_registrations_user_id_fkey(full_name, email)')
+            .eq('event_id', eventId).order('created_at'));
     }
     function eventFields(input) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || !/^\d{2}:\d{2}$/.test(input.time)) throw new Error('يرجى إدخال التاريخ والوقت بشكل صحيح.');
@@ -235,21 +252,44 @@
         mission_text: value => optionalText(value, 'نص الرسالة', 1000),
         vision_text: value => optionalText(value, 'نص الرؤية', 1000)
     };
-    // Saves only the fields given, so the structure and homepage editors stay independent.
+    // Validates and keeps only the fields given, so each editor saves just its own part.
+    const pick = (fields, checks) => Object.fromEntries(Object.entries(checks)
+        .filter(([key]) => Object.hasOwn(fields, key)).map(([key, check]) => [key, check(fields[key])]));
     async function saveSettings(fields) {
         await requireAdmin();
-        const values = Object.fromEntries(Object.entries(settingsFields)
-            .filter(([key]) => Object.hasOwn(fields, key)).map(([key, check]) => [key, check(fields[key])]));
-        return result(getClient().from('platform_settings').update(values).eq('id', true).select('id').single());
+        return result(getClient().from('platform_settings').update(pick(fields, settingsFields)).eq('id', true).select('id').single());
     }
-    async function saveDepartment(slug, input) {
+    const departmentFields = {
+        name: value => text(value, 'اسم القسم', 100),
+        display_name: value => text(value, 'عنوان القسم', 150),
+        page_title: value => optionalText(value, 'عنوان صفحة الأقسام', 200),
+        description: value => optionalText(value, 'وصف القسم', 500),
+        details: value => optionalText(value, 'تفاصيل القسم', 2000),
+        tasks: value => optionalText(String(value ?? '').split('\n').map(line => line.trim()).filter(Boolean).join('\n'), 'مهام القسم', 2000),
+        icon: value => {
+            if (!/^fa-[a-z0-9-]{1,40}$/.test(String(value ?? ''))) throw new Error('يرجى اختيار الأيقونة.');
+            return value;
+        },
+        leader: value => optionalText(value, 'اسم القائد', 150),
+        deputy: value => optionalText(value, 'اسم النائب', 150),
+        leader_title: value => title(value, departmentTitles.leader_title),
+        deputy_title: value => title(value, departmentTitles.deputy_title)
+    };
+    async function saveDepartment(slug, fields) {
         await requireAdmin();
-        return result(getClient().from('departments').update({
-            leader: optionalText(input.leader, 'اسم القائد', 150), deputy: optionalText(input.deputy, 'اسم النائب', 150),
-            leader_title: title(input.leader_title, departmentTitles.leader_title),
-            deputy_title: title(input.deputy_title, departmentTitles.deputy_title),
-            description: optionalText(input.description, 'وصف القسم', 500)
-        }).eq('slug', slug).select('slug').single());
+        return result(getClient().from('departments').update(pick(fields, departmentFields)).eq('slug', slug).select('slug').single());
+    }
+    // New departments go last; the database generates the slug.
+    async function addDepartment(input) {
+        await requireAdmin();
+        const values = Object.fromEntries(['name', 'display_name', 'description', 'icon']
+            .map(key => [key, departmentFields[key](input[key])]));
+        const [last] = await result(getClient().from('departments').select('sort_order').order('sort_order', { ascending: false }).limit(1));
+        return result(getClient().from('departments').insert({ ...values, sort_order: (last?.sort_order ?? 0) + 1 }).select('slug').single());
+    }
+    async function setDepartmentActive(slug, active) {
+        await requireAdmin();
+        return result(getClient().from('departments').update({ active: Boolean(active) }).eq('slug', slug).select('slug').single());
     }
     async function saveStat(slug, input) {
         await requireAdmin();
@@ -265,6 +305,7 @@
         if (error?.code === 'user_already_exists') return 'يوجد حساب بهذا البريد. يرجى تسجيل الدخول.';
         if (error?.code === 'signup_disabled') return 'إنشاء الحسابات غير متاح حالياً.';
         if (error?.code === 'weak_password') return 'كلمة المرور ضعيفة. اختر كلمة مرور أقوى.';
+        if (/Database error saving new user/i.test(error?.message || '')) return 'تعذر إنشاء الحساب: قد تكون اللجنة المختارة لم تعد متاحة. حدّث الصفحة واختر لجنة أخرى.';
         if (error?.code === '42501') return 'ليست لديك صلاحية لتنفيذ هذا الإجراء.';
         if (['23514', '22003', '22007'].includes(error?.code)) return 'بعض البيانات غير صحيحة. يرجى مراجعة الحقول.';
         if (error?.code === '23505') return 'هذا الطلب مسجل بالفعل.';
@@ -275,6 +316,7 @@
         getUser, getProfile, signUp, signIn, signOut, listEvents, registeredEventIds,
         registerForEvent, addEvent, updateEvent, setEventPublished, deleteEvent, submitServiceRequest, submitContribution,
         dashboardData, adminData, reviewApplication, updateStatus, listMembers, setMemberRole,
-        siteContent, saveSettings, saveDepartment, saveStat, errorMessage
+        siteContent, saveSettings, saveDepartment, addDepartment, setDepartmentActive, saveStat,
+        normalizePhone, eventRegistrations, errorMessage
     };
 })(window);

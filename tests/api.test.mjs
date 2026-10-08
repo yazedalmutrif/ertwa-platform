@@ -13,14 +13,15 @@ async function load(config, options = {}) {
     function builder(table) {
         const record = { table, op: 'select', values: undefined, eq: undefined };
         const query = {
-            select() { return query; }, order() { return query; }, single() { return query; },
+            select() { return query; }, order() { return query; }, limit() { return query; }, single() { return query; },
             insert(values) { Object.assign(record, { op: 'insert', values: clone(values) }); writes.push(record); return query; },
             update(values) { Object.assign(record, { op: 'update', values: clone(values) }); writes.push(record); return query; },
             delete() { record.op = 'delete'; writes.push(record); return query; },
             eq(column, value) { record.eq = [column, value]; return query; },
             then(resolve, reject) {
                 if (record.op === 'insert' && options.insertError) return Promise.resolve({ data: null, error: options.insertError }).then(resolve, reject);
-                const data = table === 'profiles' ? { id: 'u1', role: options.role } : {};
+                const data = table === 'profiles' ? { id: 'u1', role: options.role }
+                    : table === 'departments' && record.op === 'select' ? [{ sort_order: 6 }] : {};
                 return Promise.resolve({ data, error: null }).then(resolve, reject);
             }
         };
@@ -95,4 +96,32 @@ test('role changes and event edits require an admin', async () => {
     assert.deepEqual(admin.writes.at(-1).eq, ['id', 'e1']);
     assert.equal(admin.writes.at(-1).values.image, 'images/web-dev-event.png');
     assert.equal(admin.writes.at(-1).values.capacity, null);
+});
+
+test('phones are normalised, including Arabic digits, and invalid ones are refused', async () => {
+    const { api, rpcs } = await load({}, { role: 'member' });
+    assert.equal(api.normalizePhone('٠٥٥ ١٢٣-٤٥٦٧'), '0551234567');
+    assert.equal(api.normalizePhone('+966 (55) 123 4567'), '+966551234567');
+    assert.throws(() => api.normalizePhone('12ab'), /رقم جوال صحيح/);
+    await api.registerForEvent('e1', '۰۵۰ ۰۰۰ ۰۰۰۰');
+    assert.deepEqual(rpcs.at(-1), ['register_for_event', { p_event_id: 'e1', p_phone: '0500000000' }]);
+});
+
+test('department changes are admin-only and send only the given fields', async () => {
+    const member = await load({}, { role: 'member' });
+    await assert.rejects(member.api.addDepartment({ name: 'x', display_name: 'x', description: '', icon: 'fa-code' }), /صلاحيات الإدارة/);
+    const { api, writes } = await load({}, { role: 'admin' });
+    await api.setDepartmentActive('tech', false);
+    assert.deepEqual(writes.at(-1), { table: 'departments', op: 'update', values: { active: false }, eq: ['slug', 'tech'] });
+    await api.saveDepartment('tech', { name: ' التقنية ', tasks: 'أ\nب' });
+    assert.deepEqual(writes.at(-1).values, { name: 'التقنية', tasks: 'أ\nب' });
+    await assert.rejects(api.saveDepartment('tech', { icon: 'bad icon' }), /الأيقونة/);
+    await assert.rejects(api.addDepartment({ name: '', display_name: 'x', description: '', icon: 'fa-code' }));
+    await api.addDepartment({ name: 'الأمن', display_name: 'لجنة الأمن', description: '', icon: 'fa-shield-halved' });
+    assert.deepEqual(writes.at(-1).values, { name: 'الأمن', display_name: 'لجنة الأمن', description: '', icon: 'fa-shield-halved', sort_order: 7 });
+});
+
+test('a signup refused by the database explains the committee may be gone', async () => {
+    const { api } = await load({});
+    assert.match(api.errorMessage({ message: 'Database error saving new user', status: 500 }), /اللجنة المختارة لم تعد متاحة/);
 });
