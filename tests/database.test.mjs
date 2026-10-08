@@ -46,7 +46,7 @@ before(async () => {
         alter default privileges in schema public grant all on tables to anon, authenticated;
     `);
     try {
-        for (const name of ['202610080001_init.sql', '202610080002_admin_content.sql']) {
+        for (const name of ['202610080001_init.sql', '202610080002_admin_content.sql', '202610080003_departments_attendees.sql']) {
             await db.exec(await readFile(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
         }
     } catch (error) { delete error.query; throw error; }
@@ -78,7 +78,7 @@ test('signup atomically saves the application and ignores injected admin claims'
     const application = (await db.query('select * from public.membership_applications where user_id = $1', [member])).rows[0];
     assert.deepEqual(application.answers, answers);
     const invalid = '10000000-0000-4000-8000-000000000099';
-    await rejects(signup(invalid, 'invalid@example.com', { department_slug: 'missing' }), '23503');
+    await rejects(signup(invalid, 'invalid@example.com', { department_slug: 'missing' }), 'P0001');
     assert.equal((await db.query('select * from auth.users where id = $1', [invalid])).rows.length, 0);
     await rejects(signup(invalid, 'invalid@example.com', { answers: [] }), '23514');
     await rejects(signup(invalid, 'invalid@example.com', { answers: ['not an answer object'] }), '23514');
@@ -98,7 +98,7 @@ test('anonymous visitors can read published events and submit requests without r
             values ('عميل', 'guest@example.com', 'web', 'موقع إلكتروني', 5000, 'شهر')`);
         await rejects(db.query(`insert into public.service_requests(client_name, email, service_type, description, budget, timeline, status)
             values ('عميل', 'guest@example.com', 'web', 'موقع', 1, 'شهر', 'completed')`), '42501');
-        await rejects(db.query('select public.register_for_event($1)', [openEvent]), '42501');
+        await rejects(db.query("select public.register_for_event($1, '0551234567')", [openEvent]), '42501');
     });
 });
 
@@ -116,18 +116,18 @@ test('members see only their own private rows and cannot promote themselves or c
 
 test('event registrations are idempotent, enforce capacity, and reject past and hidden events', async () => {
     await as('authenticated', member, async () => {
-        const first = (await db.query('select public.register_for_event($1) as id', [openEvent])).rows[0].id;
-        const second = (await db.query('select public.register_for_event($1) as id', [openEvent])).rows[0].id;
+        const first = (await db.query("select public.register_for_event($1, '0551234567') as id", [openEvent])).rows[0].id;
+        const second = (await db.query("select public.register_for_event($1, '0551234567') as id", [openEvent])).rows[0].id;
         assert.equal(first, second);
-        await db.query('select public.register_for_event($1)', [fullEvent]);
+        await db.query("select public.register_for_event($1, '0551234567')", [fullEvent]);
         assert.equal((await db.query('select * from public.event_registrations')).rows.length, 2);
-        await rejects(db.query('select public.register_for_event($1)', [pastEvent]), 'P0001');
-        await rejects(db.query('select public.register_for_event($1)', [hiddenEvent]), 'P0001');
+        await rejects(db.query("select public.register_for_event($1, '0551234567')", [pastEvent]), 'P0001');
+        await rejects(db.query("select public.register_for_event($1, '0551234567')", [hiddenEvent]), 'P0001');
         await rejects(db.query('insert into public.event_registrations(event_id, user_id) values ($1, $2)', [openEvent, other]), '42501');
     });
     await as('authenticated', other, async () => {
         assert.equal((await db.query('select * from public.event_registrations')).rows.length, 0);
-        await rejects(db.query('select public.register_for_event($1)', [fullEvent]), 'P0001');
+        await rejects(db.query("select public.register_for_event($1, '0551234567')", [fullEvent]), 'P0001');
     });
     await as('anon', null, async () => {
         assert.equal((await db.query('select participants from public.list_events() where id = $1', [openEvent])).rows[0].participants, 1);
@@ -219,10 +219,51 @@ test('event capacity cannot drop below existing registrations', async () => {
     const id = '20000000-0000-4000-8000-000000000009';
     await db.query(`insert into public.events(id, title, description, date, time, location)
         values ($1, 'لقاء', 'اختبار', current_date + 2, '10:00', 'أونلاين')`, [id]);
-    for (const user of [member, other]) await as('authenticated', user, () => db.query('select public.register_for_event($1)', [id]));
+    for (const user of [member, other]) await as('authenticated', user, () => db.query("select public.register_for_event($1, '0551234567')", [id]));
     await as('authenticated', admin, async () => {
         await rejects(db.query('update public.events set capacity = 1 where id = $1', [id]), 'P0001');
         assert.equal((await db.query('update public.events set capacity = 2 where id = $1', [id])).affectedRows, 1);
         assert.equal((await db.query("update public.events set title = 'لقاء محدث' where id = $1", [id])).affectedRows, 1);
     });
+});
+
+test('event registration requires a valid phone and keeps the latest one', async () => {
+    const id = '20000000-0000-4000-8000-000000000010';
+    await db.query(`insert into public.events(id, title, description, date, time, location) values ($1, 'لقاء', 'اختبار', current_date + 3, '10:00', 'أونلاين')`, [id]);
+    await as('authenticated', member, async () => {
+        await rejects(db.query("select public.register_for_event($1, '12ab')", [id]), '22023');
+        await rejects(db.query('select public.register_for_event($1, null)', [id]), '22023');
+        const first = (await db.query("select public.register_for_event($1, '0551234567') as id", [id])).rows[0].id;
+        const again = (await db.query("select public.register_for_event($1, '+966551234567') as id", [id])).rows[0].id;
+        assert.equal(again, first);
+        assert.equal((await db.query('select phone from public.event_registrations where id = $1', [first])).rows[0].phone, '+966551234567');
+    });
+    await as('authenticated', other, () => db.query("select public.register_for_event($1, '0500000000')", [id]));
+    await as('authenticated', member, async () => assert.equal((await db.query('select * from public.event_registrations where event_id = $1', [id])).rows.length, 1));
+    await as('authenticated', admin, async () => {
+        const rows = (await db.query(`select r.phone, p.email from public.event_registrations r join public.profiles p on p.id = r.user_id where r.event_id = $1 order by p.email`, [id])).rows;
+        assert.deepEqual(rows.map(row => row.phone), ['+966551234567', '0500000000']); // admin-in-name@… (member), member2@… (other)
+    });
+});
+
+test('admins add and hide departments; nobody deletes them; signup needs an active one', async () => {
+    let slug;
+    await as('authenticated', admin, async () => {
+        slug = (await db.query("insert into public.departments(name, display_name, description, icon, sort_order) values ('الذكاء الاصطناعي', 'لجنة الذكاء الاصطناعي', 'وصف', 'fa-lightbulb', 7) returning slug")).rows[0].slug;
+        assert.match(slug, /^dept-[0-9a-f]{8}$/);
+        await rejects(db.query("update public.departments set icon = 'bad icon' where slug = $1", [slug]), '23514');
+        await rejects(db.query('delete from public.departments where slug = $1', [slug]), '42501');
+    });
+    await as('authenticated', other, async () => {
+        await rejects(db.query("insert into public.departments(name, display_name) values ('x', 'x')"), '42501');
+        assert.equal((await db.query('update public.departments set active = false where slug = $1', [slug])).affectedRows, 0);
+    });
+    await signup('10000000-0000-4000-8000-000000000020', 'new-dept@example.com', { department_slug: slug });
+    await as('authenticated', admin, () => db.query('update public.departments set active = false where slug = $1', [slug]));
+    await assert.rejects(signup('10000000-0000-4000-8000-000000000021', 'hidden@example.com', { department_slug: slug }), /اللجنة غير متاحة/);
+    const seeded = (await db.query("select page_title, icon, image, tasks from public.departments where slug = 'media'")).rows[0];
+    assert.equal(seeded.page_title, 'قسم الإعلام والإنتاج المرئي (Media Department)');
+    assert.equal(seeded.icon, 'fa-camera-retro');
+    assert.equal(seeded.image, 'images/Overlay(4).svg');
+    assert.equal(seeded.tasks.split('\n').length, 3);
 });
