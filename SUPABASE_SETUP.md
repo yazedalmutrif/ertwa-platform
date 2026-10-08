@@ -7,7 +7,7 @@ hosted on GitHub Pages. No separate Node server or secret key is needed to run i
 ## 1. Create the database
 
 Create a Supabase project. In its **SQL Editor**, run the complete contents of
-these two files once each, in this order:
+these three files once each, in this order:
 
 1. [`supabase/migrations/202610080001_init.sql`](supabase/migrations/202610080001_init.sql)
    creates the tables and permissions. It is intended for a new project: do not run
@@ -20,6 +20,10 @@ these two files once each, in this order:
    admin-role function, and the event seat guard. It is seeded with the website's
    current wording. Without it the structure page and the dashboard editors cannot
    load their content.
+3. [`supabase/migrations/202610080003_departments_attendees.sql`](supabase/migrations/202610080003_departments_attendees.sql)
+   lets admins add, edit and hide departments (it stores each department's page
+   text, tasks and icon, seeded from the current pages), refuses signups to hidden
+   departments, and records a phone number with every event registration.
 
 Each file is transactional: if it fails, nothing from it is kept. Fix the reported
 error before retrying; do not skip the permission statements. Running a file a
@@ -98,8 +102,12 @@ lets admins:
 - review committee applications and their answers, update service request statuses,
   and approve or reject contribution reports;
 - make another member an admin or remove their admin access («الأعضاء والمشرفين»);
-- change the platform and department leaders, deputies and their titles
-  («الهيكل التنظيمي»);
+- add departments, edit everything the site shows about them (names, descriptions,
+  departments-page text, tasks, icon, leaders, deputies and titles), and delete them
+  («الهيكل التنظيمي»). Deleting hides a department everywhere, including signup, and
+  keeps its past applications; hidden departments can be shown again;
+- open «المسجلون» on an event to see each attendee's name, email, phone and
+  registration time, and download it with «تحميل Excel»;
 - edit the homepage intro, mission, vision, department descriptions and statistics
   («محتوى الصفحة الرئيسية»).
 
@@ -123,15 +131,17 @@ post to FormSubmit directly, so treat the dashboard as the record of real reques
 | `profiles` | Members read their own profile; admins read all. Auth creates profiles. |
 | `membership_applications` | Members read their own application; admins review through an atomic function. |
 | `events` | Visitors read published events; admins manage events. |
-| `event_registrations` | Members read their own registrations; admins read all; registration uses a database function. |
+| `event_registrations` | Members read their own registrations; admins read all, including attendees' phone numbers; registration uses a database function and requires a phone number. |
 | `service_requests` | Guests submit without reading; signed-in owners read their own; admins read all and update status. |
 | `contributions` | Members submit/read their own; admins approve status; only approved hours count. |
-| `departments`, `platform_settings`, `home_stats` | Public read; admins edit them from the dashboard. Statistics can be edited but not added or removed. |
+| `departments`, `platform_settings`, `home_stats` | Public read; admins edit them from the dashboard. Departments can be added and hidden but never deleted; statistics can be edited but not added or removed. |
 | `profiles.role` | Changed only by an admin through `set_member_role`, never for their own account. |
 
 Events use structured dates and times interpreted in **Asia/Riyadh**. Registration
 locks the event row, checks remaining seats and time, and is idempotent for the
-same user/event. Deleting an event deletes its registrations as well.
+same user/event (registering again updates the phone number). Phone numbers typed
+with Arabic digits, spaces or dashes are accepted. Deleting an event deletes its
+registrations as well.
 
 Guests' service requests are not attached to an account by matching an email.
 Sign in before submitting if you want the request to appear in your dashboard.

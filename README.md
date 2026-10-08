@@ -10,7 +10,7 @@ python3 -m http.server 5500 --bind 127.0.0.1
 ```
 
 Open `http://localhost:5500`. Follow [Supabase setup](SUPABASE_SETUP.md) to create
-the database (two SQL files), add the public connection values, and promote your
+the database (three SQL files), add the public connection values, and promote your
 first admin account.
 Authentication and data submissions require that setup.
 
@@ -18,10 +18,13 @@ Authentication and data submissions require that setup.
 
 - Email/password signup, email confirmation, login, and logout with Supabase Auth.
 - Committee application wizard that stores personal data and questionnaire answers.
-- Public events with persistent registration, duplicate prevention, and seat limits.
+- Public events with persistent registration (with a phone number), duplicate prevention, and seat limits.
+- Page headers that show the dashboard and logout once signed in.
 - Member dashboard showing actual membership status, registrations, requests, and approved hours.
 - Admin dashboard for adding, editing and hiding events, applications, service requests,
   contribution approvals, and making members admins.
+- Admin-managed departments (add, edit, hide) shown on the homepage, departments page,
+  structure page and signup wizard, and an admin-only attendee sheet with Excel download.
 - Admin editing of the structure page (leaders, deputies, titles) and homepage content
   (intro, mission, vision, department descriptions, statistics).
 - Guest digital service requests, each emailed to the owner through FormSubmit.
@@ -37,7 +40,8 @@ Authentication and data submissions require that setup.
 | `api.js` | Supabase authentication, queries, and mutation API |
 | `main.js` | Page integration and member dashboard |
 | `admin.js` | Admin dashboard: events, reviews, members and roles |
-| `admin-content.js` | Admin editors for the structure page and homepage content |
+| `admin-content.js` | Admin editors for departments, the structure page and homepage content |
+| `departments.js` | Renders the active departments on the public pages and signup wizard |
 | `script.js` | Visual effects and committee wizard |
 | `supabase/migrations/` | Database schema, triggers, functions, grants, and RLS |
 | `tests/` | PostgreSQL permissions and frontend behavior tests |
