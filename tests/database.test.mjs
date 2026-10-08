@@ -46,7 +46,9 @@ before(async () => {
         alter default privileges in schema public grant all on tables to anon, authenticated;
     `);
     try {
-        await db.exec(await readFile(new URL('../supabase/migrations/202610080001_init.sql', import.meta.url), 'utf8'));
+        for (const name of ['202610080001_init.sql', '202610080002_admin_content.sql']) {
+            await db.exec(await readFile(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
+        }
     } catch (error) { delete error.query; throw error; }
     await signup(member, 'admin-in-name@example.com', { role: 'admin', membership_status: 'active' });
     await signup(other, 'member2@example.com');
@@ -62,9 +64,9 @@ before(async () => {
 });
 after(() => db.close());
 
-test('migration protects all eight public tables and seeds the structure', async () => {
+test('migrations protect all nine public tables and seed the structure', async () => {
     const rows = (await db.query("select relname, relrowsecurity from pg_class join pg_namespace n on n.oid = relnamespace where n.nspname = 'public' and relkind = 'r'")).rows;
-    assert.equal(rows.length, 8);
+    assert.equal(rows.length, 9);
     assert.ok(rows.every(row => row.relrowsecurity));
     assert.equal((await db.query('select * from public.departments')).rows.length, 6);
 });
@@ -168,4 +170,59 @@ test('admins review applications atomically, approve hours, and manage guest ser
         await db.query('delete from public.events where id = $1', [openEvent]);
     });
     assert.equal((await db.query('select * from public.event_registrations where event_id = $1', [openEvent])).rows.length, 0);
+});
+
+test('homepage content is public to read and seeded from the current site', async () => {
+    await as('anon', null, async () => {
+        const stats = (await db.query('select slug, value, label from public.home_stats order by sort_order')).rows;
+        assert.deepEqual(stats.map(row => row.slug), ['volunteer_hours', 'followers', 'partnerships', 'training_hours', 'events', 'members']);
+        assert.deepEqual(stats[1], { slug: 'followers', value: '10K+', label: 'متابع' });
+        const settings = (await db.query('select hero_text, leader_title, deputy_title from public.platform_settings')).rows[0];
+        assert.match(settings.hero_text, /معهد طاقات/);
+        assert.equal(settings.leader_title, 'قائد المنصة');
+        assert.deepEqual((await db.query("select description, leader_title, deputy_title from public.departments where slug = 'design'")).rows[0],
+            { description: 'إنشاء هويات بصرية مبتكرة وتصاميم جذابة للمشاريع.', leader_title: 'قائدة القسم', deputy_title: 'نائبة القسم' });
+        await rejects(db.query("insert into public.home_stats(slug, value, label) values ('x', '1', 'x')"), '42501');
+    });
+});
+
+test('only admins edit homepage content, within the limits', async () => {
+    await as('authenticated', other, async () => {
+        assert.equal((await db.query("update public.home_stats set value = '1' where slug = 'members'")).affectedRows, 0);
+        assert.equal((await db.query("update public.departments set leader = 'x' where slug = 'tech'")).affectedRows, 0);
+        await rejects(db.query("delete from public.home_stats where slug = 'members'"), '42501');
+    });
+    await as('authenticated', admin, async () => {
+        assert.equal((await db.query("update public.home_stats set value = '60+' where slug = 'members'")).affectedRows, 1);
+        await rejects(db.query("update public.home_stats set value = '' where slug = 'members'"), '23514');
+        await rejects(db.query("update public.departments set leader_title = 'مدير' where slug = 'tech'"), '23514');
+        await rejects(db.query("update public.platform_settings set hero_text = repeat('x', 1001)"), '23514');
+        assert.equal((await db.query("update public.departments set leader = '', leader_title = 'قائد القسم' where slug = 'tech'")).affectedRows, 1);
+    });
+});
+
+test('only admins change roles, and never their own', async () => {
+    await as('authenticated', other, () => rejects(db.query("select public.set_member_role($1, 'admin')", [other]), '42501'));
+    await as('authenticated', admin, async () => {
+        await db.query("select public.set_member_role($1, 'admin')", [other]);
+        await rejects(db.query("select public.set_member_role($1, 'owner')", [other]), '22023');
+        await rejects(db.query("select public.set_member_role($1, 'member')", [admin]), 'P0001');
+        await rejects(db.query("select public.set_member_role($1, 'member')", ['10000000-0000-4000-8000-0000000000ff']), 'P0001');
+    });
+    const role = () => db.query('select role, membership_status from public.profiles where id = $1', [other]).then(result => result.rows[0]);
+    assert.deepEqual(await role(), { role: 'admin', membership_status: 'active' });
+    await as('authenticated', admin, () => db.query("select public.set_member_role($1, 'member')", [other]));
+    assert.deepEqual(await role(), { role: 'member', membership_status: 'active' });
+});
+
+test('event capacity cannot drop below existing registrations', async () => {
+    const id = '20000000-0000-4000-8000-000000000009';
+    await db.query(`insert into public.events(id, title, description, date, time, location)
+        values ($1, 'لقاء', 'اختبار', current_date + 2, '10:00', 'أونلاين')`, [id]);
+    for (const user of [member, other]) await as('authenticated', user, () => db.query('select public.register_for_event($1)', [id]));
+    await as('authenticated', admin, async () => {
+        await rejects(db.query('update public.events set capacity = 1 where id = $1', [id]), 'P0001');
+        assert.equal((await db.query('update public.events set capacity = 2 where id = $1', [id])).affectedRows, 1);
+        assert.equal((await db.query("update public.events set title = 'لقاء محدث' where id = $1", [id])).affectedRows, 1);
+    });
 });
