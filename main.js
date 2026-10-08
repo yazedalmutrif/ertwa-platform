@@ -104,9 +104,33 @@
         }
     }
 
+    // Missing configuration or a network error counts as signed out.
+    async function currentUser() {
+        try { return await api.getUser(); } catch (_) { return null; }
+    }
+
+    // Public headers swap «تسجيل الدخول» for the dashboard and logout once signed in.
+    async function setupHeader() {
+        const login = document.querySelector('.main-header .btn-login');
+        if (!login || document.getElementById('logout-button') || !await currentUser()) return;
+        const account = node('div', null, 'header-account');
+        const dashboard = node('a', 'لوحة التحكم', 'btn-login');
+        dashboard.href = 'dashboard.html';
+        const logout = node('button', 'تسجيل الخروج', 'btn-login btn-logout');
+        logout.type = 'button';
+        logout.addEventListener('click', async () => {
+            try { await busy(logout, async () => { await api.signOut(); window.location.href = 'index.html'; }); }
+            catch (error) { message(account, api.errorMessage(error), true); }
+        });
+        account.append(dashboard, logout);
+        login.replaceWith(account);
+    }
+
     function setupLogin() {
         const form = document.getElementById('loginForm');
-        form?.addEventListener('submit', async event => {
+        if (!form) return;
+        currentUser().then(user => { if (user) window.location.replace('dashboard.html'); });
+        form.addEventListener('submit', async event => {
             event.preventDefault();
             try {
                 await busy(form.querySelector('[type="submit"]'), async () => {
@@ -270,7 +294,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        setupLogin(); setupRegistration(); setupOrders(); setupDashboard();
+        setupHeader(); setupLogin(); setupRegistration(); setupOrders(); setupDashboard();
         loadEvents(); loadDashboard(); loadStructure(); loadHomeContent();
     });
 })();

@@ -283,3 +283,22 @@ test('the homepage content form stays closed when its content fails to load', as
     assert.match(window.document.getElementById('admin-structure-list').textContent, /انقطع الاتصال/);
     await window.happyDOM.close();
 });
+
+test('headers show the dashboard and logout once signed in', async () => {
+    let signedOut = false;
+    const signedIn = await page('events.html', { getUser: async () => ({ id: 'u1' }), signOut: async () => { signedOut = true; }, listEvents: async () => [], registeredEventIds: async () => [] });
+    const header = signedIn.document.querySelector('.main-header');
+    assert.equal(header.querySelector('a.btn-login').textContent, 'لوحة التحكم');
+    header.querySelector('.btn-logout').click(); await flush();
+    assert.equal(signedOut, true);
+    await signedIn.happyDOM.close();
+    const guest = await page('events.html', { getUser: async () => null, listEvents: async () => [], registeredEventIds: async () => [] });
+    assert.equal(guest.document.querySelector('.main-header .btn-login').textContent.trim(), 'تسجيل الدخول');
+    await guest.happyDOM.close();
+});
+
+test('the login page sends signed-in visitors to the dashboard', async () => {
+    const window = await page('login.html', { getUser: async () => ({ id: 'u1' }) });
+    assert.ok(window.location.href.endsWith('dashboard.html'));
+    await window.happyDOM.close();
+});

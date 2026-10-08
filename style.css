@@ -88,6 +88,11 @@ body {
     transform: scale(1.05);
 }
 
+/* Signed-in header: dashboard link and logout side by side. */
+.header-account { display: flex; gap: 10px; align-items: center; }
+a.btn-login { text-decoration: none; display: inline-block; }
+.btn-logout { background-color: transparent; color: var(--jungle-green); border: 2px solid var(--jungle-green); }
+
 /* ======================================================== 
    3. قسم الـ Hero
    ======================================================== */
@@ -844,6 +849,8 @@ body {
         text-align: center !important;
         padding: 12px 0 !important;
     }
+    .header-account { width: 100%; }
+    .header-account .btn-login { flex: 1; }
 
     .hero {
         flex-direction: column !important;
