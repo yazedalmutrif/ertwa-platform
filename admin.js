@@ -2,7 +2,11 @@
     'use strict';
     const api = window.ErtwaAPI;
     const { node, message, busy, statuses, services } = window.ErtwaUI;
+    const defaultImage = 'images/web-dev-event.png';
+    const roles = { admin: 'مشرف', member: 'عضو' };
     let initialized = false;
+    let selfId = null;
+    let editingId = null;
 
     function table(id, rows, columns, render) {
         const body = document.getElementById(id);
@@ -32,14 +36,39 @@
         if (current !== 'rejected') action(container, 'رفض', () => work('rejected'), true);
     }
 
+    // The add-event form doubles as the edit form; null returns it to add mode.
+    function setEditMode(event) {
+        const form = document.getElementById('add-event-form');
+        editingId = event ? event.id : null;
+        document.getElementById('event-form-title').textContent = event ? 'تعديل الفعالية' : 'إضافة فعالية جديدة';
+        document.getElementById('event-submit').textContent = event ? 'حفظ التعديلات' : 'إضافة الفعالية للمنصة +';
+        document.getElementById('event-cancel').hidden = !event;
+        message(form, '');
+        if (!event) { form.reset(); return; }
+        Object.entries({
+            'event-title': event.title, 'event-desc': event.description, 'event-date': event.date,
+            'event-time': event.time.slice(0, 5), 'event-loc': event.location,
+            'event-image': event.image === defaultImage ? '' : event.image, 'event-capacity': event.capacity ?? ''
+        }).forEach(([id, value]) => { document.getElementById(id).value = value; });
+        form.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    }
+
     async function refresh() {
-        const data = await api.adminData();
+        const [data, members] = await Promise.all([api.adminData(), api.listMembers()]);
         message(document.getElementById('admin-controls'), '');
         table('admin-events-list', data.events, 3, (row, event) => {
-            cell(row, event.title); cell(row, `${event.date} — ${event.participants} مشارك`);
+            cell(row, event.title);
+            cell(row, `${event.date} — ${event.participants} مشارك${event.published ? '' : ' — مخفية'}`);
             const controls = cell(row);
+            const edit = node('button', 'تعديل', 'admin-action');
+            edit.type = 'button';
+            edit.addEventListener('click', () => setEditMode(event));
+            controls.append(edit);
+            action(controls, event.published ? 'إخفاء' : 'إظهار', () => api.setEventPublished(event.id, !event.published));
             action(controls, 'حذف', async () => {
-                if (window.confirm('هل تريد حذف هذه الفعالية وجميع تسجيلاتها؟')) await api.deleteEvent(event.id);
+                if (!window.confirm('هل تريد حذف هذه الفعالية وجميع تسجيلاتها؟')) return;
+                await api.deleteEvent(event.id);
+                if (editingId === event.id) setEditMode(null);
             }, true);
         });
         table('admin-applications-list', data.applications, 5, (row, application) => {
@@ -71,28 +100,47 @@
             cell(row, `${contribution.hours} ساعة`); cell(row, statuses[contribution.status]);
             reviewButtons(cell(row), contribution.status, status => api.updateStatus('contributions', contribution.id, status));
         });
+        // The signed-in admin cannot change their own role (the database refuses it too).
+        table('admin-members-list', members, 5, (row, member) => {
+            cell(row, member.full_name); cell(row, member.email);
+            cell(row, roles[member.role]); cell(row, statuses[member.membership_status]);
+            const controls = cell(row);
+            if (member.id === selfId) return;
+            const promote = member.role !== 'admin';
+            action(controls, promote ? 'ترقية لمشرف' : 'إزالة الإشراف', async () => {
+                const question = promote
+                    ? `هل تريد منح صلاحيات الإشراف لـ ${member.full_name}؟`
+                    : `هل تريد إزالة صلاحيات الإشراف من ${member.full_name}؟`;
+                if (window.confirm(question)) await api.setMemberRole(member.id, promote ? 'admin' : 'member');
+            }, !promote);
+        });
     }
 
     async function initialize() {
         if (!initialized) {
+            selfId = (await api.getProfile()).id;
             initialized = true;
             const form = document.getElementById('add-event-form');
+            document.getElementById('event-cancel').addEventListener('click', () => setEditMode(null));
             form.addEventListener('submit', async event => {
                 event.preventDefault();
+                const editing = editingId;
                 try {
-                    const saved = await busy(form.querySelector('[type="submit"]'), async () => {
-                        await api.addEvent({
+                    const saved = await busy(document.getElementById('event-submit'), async () => {
+                        const fields = {
                             title: document.getElementById('event-title').value,
                             description: document.getElementById('event-desc').value,
                             date: document.getElementById('event-date').value, time: document.getElementById('event-time').value,
                             location: document.getElementById('event-loc').value,
                             image: document.getElementById('event-image').value,
                             capacity: document.getElementById('event-capacity').value
-                        });
+                        };
+                        if (editing) await api.updateEvent(editing, fields); else await api.addEvent(fields);
                         return true;
                     });
                     if (!saved) return;
-                    form.reset(); await refresh(); message(form, 'تمت إضافة الفعالية بنجاح.');
+                    setEditMode(null); await refresh();
+                    message(form, editing ? 'تم حفظ التعديلات.' : 'تمت إضافة الفعالية بنجاح.');
                 } catch (error) { message(form, api.errorMessage(error), true); }
             });
         }

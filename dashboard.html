@@ -112,7 +112,7 @@
             <!-- ================= قسم الإدارة التحكم الخاص بالآدمن (Admin Section) ================= -->
             <div id="admin-controls" class="hidden-element admin-controls-wrapper">
                 <h3 class="admin-section-title">
-                    <i class="fa-solid fa-calendar-plus admin-icon"></i>إضافة فعالية جديدة
+                    <i class="fa-solid fa-calendar-plus admin-icon"></i><span id="event-form-title">إضافة فعالية جديدة</span>
                 </h3>
                 
                 <form id="add-event-form" class="admin-form-margin">
@@ -148,7 +148,8 @@
                             <input type="number" id="event-capacity" class="form-group__input" min="1" max="100000" step="1" placeholder="بدون حد عند تركه فارغاً">
                         </div>
                     </div>
-                    <button type="submit" class="btn-submit btn-submit-margin">إضافة الفعالية للمنصة +</button>
+                    <button type="submit" id="event-submit" class="btn-submit btn-submit-margin">إضافة الفعالية للمنصة +</button>
+                    <button type="button" id="event-cancel" class="btn-secondary" hidden>إلغاء</button>
                 </form>
 
                 <h3 class="admin-section-subtitle">
@@ -186,6 +187,13 @@
                     <table class="admin-table">
                         <thead><tr><th>العضو</th><th>التقرير</th><th>الساعات</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
                         <tbody id="admin-contributions-list"></tbody>
+                    </table>
+                </div>
+                <h3 class="admin-section-subtitle dashboard-extra">الأعضاء والمشرفين</h3>
+                <div class="table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>الاسم</th><th>البريد</th><th>الصلاحية</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+                        <tbody id="admin-members-list"></tbody>
                     </table>
                 </div>
             </div>

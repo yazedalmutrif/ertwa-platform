@@ -167,3 +167,48 @@ test('structure page fills leaders and titles by department slug', async () => {
     assert.ok(window.document.querySelector('.leader-label i'));
     await window.happyDOM.close();
 });
+
+const adminPage = ({ events = [], members = [], ...api } = {}) => page('dashboard.html', {
+    getUser: async () => ({ id: 'self' }),
+    getProfile: async () => ({ id: 'self' }),
+    dashboardData: async () => ({ profile: { full_name: 'المشرف', role: 'admin', membership_status: 'active' },
+        applications: [], registrations: [], contributions: [], requests: [], hours: 0 }),
+    adminData: async () => ({ events, applications: [], requests: [], contributions: [] }),
+    listMembers: async () => members,
+    ...api
+}, { scripts: ['admin.js'] });
+
+test('admins edit an existing event without re-entering it', async () => {
+    const calls = [];
+    const event = { id: 'e1', title: 'ورشة', description: 'تفاصيل', date: '2099-05-01', time: '18:30:00', location: 'الطائف', image: 'images/web-dev-event.png', capacity: 20, published: true, participants: 3 };
+    const window = await adminPage({ events: [event], members: [],
+        updateEvent: async (id, input) => calls.push(['update', id, { ...input }]), // copied out of the page's realm addEvent: async () => calls.push(['add']),
+        setEventPublished: async (id, published) => calls.push(['publish', id, published]) });
+    const row = window.document.querySelector('#admin-events-list tr');
+    [...row.querySelectorAll('button')].find(button => button.textContent === 'تعديل').click(); await flush();
+    const value = id => window.document.getElementById(id).value;
+    assert.deepEqual([value('event-title'), value('event-time'), value('event-image'), value('event-capacity')], ['ورشة', '18:30', '', '20']);
+    assert.equal(window.document.getElementById('event-form-title').textContent.trim(), 'تعديل الفعالية');
+    window.document.getElementById('event-loc').value = 'أونلاين';
+    submit(window, 'add-event-form'); await flush();
+    assert.deepEqual(calls[0], ['update', 'e1', { title: 'ورشة', description: 'تفاصيل', date: '2099-05-01', time: '18:30', location: 'أونلاين', image: '', capacity: '20' }]);
+    assert.equal(window.document.getElementById('event-submit').textContent.trim(), 'إضافة الفعالية للمنصة +');
+    [...window.document.querySelectorAll('#admin-events-list button')].find(button => button.textContent === 'إخفاء').click(); await flush();
+    assert.deepEqual(calls.at(-1), ['publish', 'e1', false]);
+    await window.happyDOM.close();
+});
+
+test('members table offers role changes except on the signed-in admin', async () => {
+    const changes = [];
+    const window = await adminPage({ events: [], members: [
+        { id: 'self', full_name: 'أنا', email: 'me@x.co', role: 'admin', membership_status: 'active' },
+        { id: 'u2', full_name: 'عضو', email: 'u2@x.co', role: 'member', membership_status: 'pending' }],
+        setMemberRole: async (id, role) => changes.push([id, role]) });
+    window.confirm = () => true;
+    const rows = window.document.querySelectorAll('#admin-members-list tr');
+    assert.equal(rows[0].querySelector('button'), null);
+    assert.equal(rows[1].querySelector('button').textContent, 'ترقية لمشرف');
+    rows[1].querySelector('button').click(); await flush();
+    assert.deepEqual(changes, [['u2', 'admin']]);
+    await window.happyDOM.close();
+});
